@@ -1,64 +1,14 @@
-import type { BillingCycle, SubscriptionView } from '../config/index.js'
-
-// 行类型（DAL 返回，已转为 camelCase 与原生 TS 类型）
-export interface CategoryRow {
-  id: number
-  name: string
-  createdAt: string
-  updatedAt: string
-}
-
-export interface SubscriptionRow {
-  id: number
-  name: string
-  categoryId: number
-  price: number
-  billingCycle: BillingCycle
-  startDate: string
-  expireDate: string
-  autoRenew: boolean
-  note: string | null
-  archived: boolean
-  deletedAt: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface CreateCategoryInput {
-  name: string
-}
-
-export interface UpdateCategoryInput {
-  name: string
-}
-
-export interface CreateSubscriptionInput {
-  name: string
-  categoryId: number
-  price: number
-  billingCycle: BillingCycle
-  startDate: string
-  expireDate: string
-  autoRenew: boolean
-  note: string | null
-}
-
-export interface UpdateSubscriptionInput {
-  name: string
-  categoryId: number
-  price: number
-  billingCycle: BillingCycle
-  startDate: string
-  expireDate: string
-  autoRenew: boolean
-  note: string | null
-}
-
-export interface SubscriptionFilter {
-  view: SubscriptionView
-  categoryId?: number
-  search?: string
-}
+import type {
+  BillingCycle,
+  CategoryRow,
+  CreateCategoryInput,
+  CreateSubscriptionInput,
+  SubscriptionFilter,
+  SubscriptionRow,
+  SubscriptionView,
+  UpdateCategoryInput,
+  UpdateSubscriptionInput,
+} from '../types/domain.js'
 
 // 数据库适配器抽象（屏蔽 SQLite / MySQL 方言差异）
 export interface DbAdapter {

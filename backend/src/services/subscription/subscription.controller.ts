@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { ok } from '../../utils/response.js'
 import { DomainError } from '../../dal/types.js'
-import type { SubscriptionView } from '../../config/index.js'
+import type { SubscriptionView } from '../../types/domain.js'
 import {
   archiveSubscription,
   createSubscription,

@@ -10,7 +10,7 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 
 > **当前实现状态**：MVP 第一阶段功能（FR-01~FR-10）已全部实现并跑通。
 > - **快速部署（SQLite）**已完整可用，为默认部署模式，零外部依赖、开箱即用。
-> - **稳定部署（MySQL）**：DAL 抽象接口已定义（`DbAdapter`），但 MySQL 适配器实现尚未完成（`db/mysql.ts` 连接池保留但未接入 DAL）。需要时按 `dal/sqlite.ts` 的模式实现 `dal/mysql.ts` 并在 `dal/index.ts` 注册。
+> - **稳定部署（MySQL）**：DAL 抽象接口已定义（`DbAdapter`），但 MySQL 适配器实现尚未完成。需要时按 `dal/sqlite.ts` 的模式实现 `dal/mysql.ts` 并在 `dal/index.ts` 注册。
 > - 数据模型（`subscription` / `category` 两表）按 PRD 4.1/4.2 实现，由 DAL 自动建表。
 
 ## 常用命令
@@ -30,7 +30,7 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 - `pnpm build`：`tsc` 编译到 `dist/`。
 - `pnpm start`：运行编译产物 `node dist/bootstrap/server.js`。
 - `pnpm type-check`：`tsc --noEmit`。
-- `pnpm lint`：eslint `--fix`（**注**：backend 未安装 eslint 依赖，此命令暂不可用；根目录 `pnpm lint` 的 oxlint + eslint 已覆盖 backend `.ts` 文件检查）。
+- `pnpm lint`：委托根目录 `pnpm lint`（`pnpm --dir .. lint`，执行 oxlint + eslint），覆盖 backend `.ts` 文件检查（backend 未单独安装 eslint 依赖）。
 
 ### 数据库
 - **快速部署（默认，SQLite）**：无需任何容器或外部数据库服务。`DB_TYPE=sqlite`（默认），数据库文件存于 `backend/data/exp-track.db`（首次启动自动创建目录与建表）。
@@ -51,8 +51,8 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 其余目录：
 - `bootstrap/`：`app.ts` 组装 Express 与中间件链；`server.ts` 启动入口，启动时调 `initDb()` 建表，监听 SIGINT/SIGTERM 优雅关闭 DAL。
 - `config/`：`index.ts` 从环境变量加载并导出 `config` 对象（含 `dbDriver`、`sqlite`、`mysql`、`domain` 领域配置）；`timezone.ts` 被其副作用导入以设 `TZ=Asia/Shanghai`。
-- `dal/`：**数据访问层**，屏蔽 SQLite/MySQL 方言差异。`types.ts` 定义 `DbAdapter` 接口与行类型、`DomainError`；`sqlite.ts` 为 SQLite 实现（`better-sqlite3`，自动建表）；`index.ts` 为工厂 `getDb()`/`initDb()`/`closeDb()`，按 `config.dbDriver` 选择适配器。**所有业务代码经 `getDb()` 操作数据库，勿直接 import 具体数据库驱动**。
-- `db/mysql.ts`：mysql2 连接池（旧实现，保留备用，未接入 DAL；MySQL 适配器实现后应迁移至 `dal/mysql.ts`）。
+- `dal/`：**数据访问层**，屏蔽 SQLite/MySQL 方言差异。`types.ts` 定义 `DbAdapter` 接口与 `DomainError`（业务行/DTO 类型见 `types/domain.ts`）；`sqlite.ts` 为 SQLite 实现（`better-sqlite3`，自动建表）；`index.ts` 为工厂 `getDb()`/`initDb()`/`closeDb()`，按 `config.dbDriver` 选择适配器。**所有业务代码经 `getDb()` 操作数据库，勿直接 import 具体数据库驱动**。
+- `types/`：**领域类型归口层**，集中存放与数据库驱动/配置加载无关纯业务类型（`types/domain.ts`：枚举、`*Row` 行类型、Create/Update DTO、`SubscriptionFilter`）。业务代码统一从此引入领域类型，勿再从 `config` 或 `dal` 取领域类型。
 - `middlewares/`：`request-logger`（请求耗时）、`error-handler`（统一处理 `DomainError` 业务错误、`ZodError` 校验错误、兜底 500）。
 - `utils/`：`response.ts`、`logger.ts`、`date.ts`（剩余天数计算、状态四档判定、日期校验）。
 

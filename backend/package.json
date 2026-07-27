@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/bootstrap/server.js",
     "type-check": "tsc --noEmit",
-    "lint": "eslint . --fix"
+    "lint": "pnpm --dir .. lint"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.1",

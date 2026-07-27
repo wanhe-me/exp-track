@@ -1,16 +1,16 @@
 import Database from 'better-sqlite3'
 import { config } from '../config/index.js'
 import { logger } from '../utils/logger.js'
+import type { DbAdapter } from './types.js'
 import type {
   CategoryRow,
   CreateCategoryInput,
   CreateSubscriptionInput,
-  DbAdapter,
   SubscriptionFilter,
   SubscriptionRow,
   UpdateCategoryInput,
   UpdateSubscriptionInput,
-} from './types.js'
+} from '../types/domain.js'
 
 type SqliteRow = Record<string, unknown>
 

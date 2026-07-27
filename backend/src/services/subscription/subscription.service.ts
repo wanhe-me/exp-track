@@ -1,14 +1,19 @@
 import { z } from 'zod'
 import { getDb } from '../../dal/index.js'
 import { DomainError } from '../../dal/types.js'
-import type { SubscriptionFilter, SubscriptionRow } from '../../dal/types.js'
+import type {
+  BillingCycle,
+  SubscriptionFilter,
+  SubscriptionRow,
+  SubscriptionStatus,
+  SubscriptionView,
+} from '../../types/domain.js'
 import {
   calcRemainingDays,
   calcStatus,
   isExpireOnAfterStart,
   isValidDateStr,
 } from '../../utils/date.js'
-import type { BillingCycle, SubscriptionStatus, SubscriptionView } from '../../config/index.js'
 
 // 校验：价格为非负、精度 2 位小数
 const priceField = z

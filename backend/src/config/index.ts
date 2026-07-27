@@ -18,13 +18,9 @@ const intEnv = (name: string, fallback: number): number => {
   return parsed
 }
 
+import type { BillingCycle, SubscriptionStatus, SubscriptionView } from '../types/domain.js'
+
 export type DbDriver = 'sqlite' | 'mysql'
-
-export type BillingCycle = 'month' | 'quarter' | 'year'
-
-export type SubscriptionView = 'active' | 'archived' | 'deleted'
-
-export type SubscriptionStatus = 'expired' | 'soon7' | 'soon30' | 'sufficient'
 
 const dbDriver: DbDriver =
   process.env.DB_TYPE === 'mysql' ? 'mysql' : 'sqlite'
