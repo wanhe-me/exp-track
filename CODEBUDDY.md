@@ -8,9 +8,9 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 
 前端经 Axios 调后端 REST API，双方遵守统一响应信封。产品核心痛点是「不知道有哪些订阅、何时过期」，可视化只做「未来到期时间轴」一张图（P1）。详见 `docs/PRD/expTrack_PRD.md`。
 
-> **重要：PRD 为权威目标，以下为与当前代码的偏差**（新建/扩展功能以 PRD 数据模型为准对齐实现，必要时迁移 `init.sql`，不要被现有表结构误导）
+> **重要：PRD 为权威目标，以下为与当前代码的偏差**（新建/扩展功能以 PRD 数据模型为准对齐实现，不要被现有表结构误导）
 > - PRD 规划 SQLite + MySQL 双库、经 DAL 抽象屏蔽方言；**当前代码仅实现 MySQL**（`backend/src/db/mysql.ts`，依赖 `mysql2`），不存在 DAL 抽象层与 SQLite 实现。
-> - PRD 数据模型 `subscription`（`category_id` 外键、`price`、`billing_cycle` 仅 month/quarter/year、`expire_date` 必填、`archived`、`deleted_at` 软删除）；**实际 `backend/src/sql/init.sql` 的 `subscriptions` 表不同**：无外键 `category`（改为 VARCHAR）、无 `archived`/`deleted_at`、增了 `provider`/`currency`/`next_bill_date`/`status`/`payment_method`，`billing_cycle` 含 daily/weekly，`expire_date` 可空。
+> - PRD 数据模型 `subscription`（`category_id` 外键、`price`、`billing_cycle` 仅 month/quarter/year、`expire_date` 必填、`archived`、`deleted_at` 软删除）；**当前数据库尚未建立订阅/分类表**（原 `init.sql` 已删除），实现时须按 PRD 4.1/4.2 新建表并以其为准对齐。
 
 ## 常用命令
 
@@ -34,7 +34,7 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 ### 数据库（Docker）
 - `cp .env.example .env`：根目录配置 MySQL/phpMyAdmin 端口与账号；`backend/` 下也需 `cp .env.example .env` 配置数据库连接与 CORS。
 - `docker compose up -d`：启动 MySQL 8.0 + phpMyAdmin。
-- MySQL 127.0.0.1:13306（库 `exp_track`），phpMyAdmin 127.0.0.1:18080。`init.sql` 仅在容器首次启动执行，改后须删卷 `exp-track-mysql-data` 重建。
+- MySQL 127.0.0.1:13306（库 `exp_track`），phpMyAdmin 127.0.0.1:18080。数据库初始化脚本待按 PRD 重建（原 `init.sql` 已删除），重建后删卷 `exp-track-mysql-data` 重启容器即可重新执行。
 
 > 本项目**未配置测试框架**（无 vitest/jest），暂无测试/单测命令。
 

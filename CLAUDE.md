@@ -57,7 +57,7 @@ docker compose up -d        # 启动 MySQL 8.0 + phpMyAdmin
 
 - MySQL：`127.0.0.1:13306`，库名 `exp_track`
 - phpMyAdmin：`127.0.0.1:18080`
-- 初始化 SQL `backend/src/sql/init.sql` 会在容器**首次启动**时自动执行；修改后需删除卷 `exp-track-mysql-data` 重建才会重新执行。
+- MySQL 初始化脚本待按 PRD 数据模型重建（原 `backend/src/sql/init.sql` 已删除）；重建后删除卷 `exp-track-mysql-data` 重启容器即可重新执行。
 
 后端运行前还需在 `backend/` 下 `cp .env.example .env` 配置数据库连接与 CORS。
 
@@ -207,8 +207,8 @@ docker compose up -d        # 启动 MySQL 8.0 + phpMyAdmin
 
 ## 与代码实现的偏差（PRD 目标尚未落地）
 
-PRD 为权威目标，以下项当前代码尚未实现；新建/扩展相关功能时**以 PRD 为准对齐实现**（必要时迁移 `init.sql` 与接口），不要被现有表结构误导：
+PRD 为权威目标，以下项当前代码尚未实现；新建/扩展相关功能时**以 PRD 为准对齐实现**，不要被现有表结构误导：
 
 - **DAL / SQLite**：PRD 规划 SQLite + MySQL 双库经 DAL 抽象屏蔽方言；当前仅 `db/mysql.ts`（mysql2），无 DAL 层、无 SQLite 实现。
-- **数据模型**：实际 `backend/src/sql/init.sql` 的 `subscriptions` 表与 PRD 4.1 不一致——无 `category_id` 外键（`category` 为 VARCHAR）、无 `archived` / `deleted_at`（软删除/归档未实现）、新增 `provider` / `currency` / `next_bill_date` / `status` / `payment_method`，`billing_cycle` 含 `daily`/`weekly`，`expire_date` 可空；PRD 的 `category` 实体也尚未建表。实现订阅/分类功能时按 PRD 数据模型对齐。
+- **数据模型**：当前数据库尚未建立订阅/分类表（原 `init.sql` 初始化脚本已删除）。实现订阅/分类功能时须按 PRD 4.1（`subscription`，含 `category_id` 外键、`archived`、`deleted_at` 软删除）与 4.2（`category`）新建表，并以 PRD 为准对齐，不要沿用旧的字段设计。
 - **前端脚手架**：目前 `router` / `views` / `stores` 多为空，PRD 规划的组件与视图待实现。
