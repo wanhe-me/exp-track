@@ -45,36 +45,24 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 - 后端封装于 `backend/src/utils/response.ts`：`ok(res, data, status)` / `fail(res, status, code, message, details?)`。控制器须始终用二者返回，勿直接 `res.json`。
 - 前端封装于 `src/lib/api.ts`：Axios 响应拦截器识别 `ok===false` 业务错误并 reject，调用方以 `unwrap<T>(res)` 取 `data`。类型为 `ApiEnvelope<T>`。
 
-### 后端结构（`backend/src/`）
-按**业务域**组织在 `services/<domain>/`，每域通常含 `<domain>.controller.ts`（定义 `Router`、处理 HTTP、调 service、用 ok/fail 返回）与 `<domain>.service.ts`（纯业务逻辑、操作数据库、zod 校验）。新增域：建目录→写 controller+service→在 `http/router.ts` 用 `apiRouter.use(xxxRouter)` 挂载（路径前缀 `/api`）。参考已有域 `health/`、`category/`、`subscription/`。
+### 目录导航（按需阅读，勿把目录树当说明书）
 
-其余目录：
-- `bootstrap/`：`app.ts` 组装 Express 与中间件链；`server.ts` 启动入口，启动时调 `initDb()` 建表，监听 SIGINT/SIGTERM 优雅关闭 DAL。
-- `config/`：`index.ts` 从环境变量加载并导出 `config` 对象（含 `dbDriver`、`sqlite`、`mysql`、`domain` 领域配置）；`timezone.ts` 被其副作用导入以设 `TZ=Asia/Shanghai`。
-- `dal/`：**数据访问层**，屏蔽 SQLite/MySQL 方言差异。`types.ts` 定义 `DbAdapter` 接口与 `DomainError`（业务行/DTO 类型见 `types/domain.ts`）；`sqlite.ts` 为 SQLite 实现（`better-sqlite3`，自动建表）；`index.ts` 为工厂 `getDb()`/`initDb()`/`closeDb()`，按 `config.dbDriver` 选择适配器。**所有业务代码经 `getDb()` 操作数据库，勿直接 import 具体数据库驱动**。
-- `types/`：**领域类型归口层**，集中存放与数据库驱动/配置加载无关纯业务类型（`types/domain.ts`：枚举、`*Row` 行类型、Create/Update DTO、`SubscriptionFilter`）。业务代码统一从此引入领域类型，勿再从 `config` 或 `dal` 取领域类型。
-- `middlewares/`：`request-logger`（请求耗时）、`error-handler`（统一处理 `DomainError` 业务错误、`ZodError` 校验错误、兜底 500）。
-- `utils/`：`response.ts`、`logger.ts`、`date.ts`（剩余天数计算、状态四档判定、日期校验）。
+> **总原则**：写任何代码前，先读目标目录里一个**已有同类文件**作为样板，照其目录位置、命名、返回方式、类型归口来写；不要凭空新建或臆测约定。下面的表只告诉你「做 X 类改动时去哪几个目录跑一遍」，不列举全部文件。
 
-**配置读取约定**：后端所有配置经 `config` 对象获取，勿直接读 `process.env`。
+| 你要做的事 | 先读这几个目录 / 文件（跑一遍现有模式） |
+|------|------|
+| 新增 / 修改后端接口或业务域 | `backend/src/services/<domain>/`、`http/router.ts`、`utils/response.ts`；参考 `health/` `category/` `subscription/` 中任一已有域 |
+| 操作数据库 / 加表 | `backend/src/dal/`、`types/domain.ts`（业务代码统一经 `getDb()`，勿直接 import 具体数据库驱动） |
+| 改后端领域类型 | `backend/src/types/domain.ts`（勿从 `config` 或 `dal` 取领域类型） |
+| 改后端配置项 | `backend/src/config/index.ts`（所有配置经 `config` 对象，勿直接读 `process.env`） |
+| 新增 / 修改前端页面 | `src/views/`、`src/router/index.ts`、`src/stores/`、`src/api/` |
+| 改前端公共组件 / 原子组件 | `src/components/base/`（props 驱动、无副作用）；业务组件见 `src/components/` |
+| 改设计令牌 / 视觉样式 | `src/assets/styles/tokens.css`；状态色映射见 `src/utils/status/` |
+| 改前后端共享类型 / 领域常量 | 后端 `types/domain.ts`、前端 `src/types/index.ts`（`domainConfig` 前后端须一致） |
+| 调用后端 API | 前端 `src/lib/api.ts`（Axios 实例 + 拦截器 + `unwrap`，基址 `VITE_API_BASE_URL`） |
+| 复用订阅增删改 / 归档恢复逻辑 | `src/composables/useSubscriptionActions.ts` |
 
 **NodeNext 与 `.js` 扩展名（易踩坑）**：后端 `tsconfig.json` 用 `"module": "NodeNext"`，所有相对 import 必须显式写 `.js`（源文件是 `.ts` 也如此），如 `import { ok } from '../utils/response.js'`，否则运行时报模块找不到。
-
-### 前端结构（`src/`）
-- `lib/api.ts`：Axios 实例 + 拦截器 + `unwrap`，基址由 `VITE_API_BASE_URL` 控制（默认 `http://127.0.0.1:15180`）。
-- `api/`：业务接口封装（`category.ts`、`subscription.ts`），统一调用入口。
-- `router/index.ts`：Vue Router 路由，已配置看板/时间轴/已归档/回收站/分类五个页面。
-- `stores/`：Pinia（setup 风格 store），`category.ts`、`subscription.ts`。
-- `composables/`：`useSubscriptionActions.ts`（订阅增删改归档恢复的表单与确认弹窗逻辑复用）。
-- `components/base/`：公共原子组件（`StatusBadge`、`CategoryTag`、`ConfirmDialog`、`EmptyState`）。
-- `components/`：业务组件（`SubscriptionCard`、`SubscriptionFormDialog`）。
-- `layouts/`：`DefaultLayout.vue`（顶部导航 + 内容区）。
-- `views/`：按业务模块分子目录——`dashboard/`（`DashboardView` 看板）、`timeline/`（`TimelineView` 时间轴）、`subscription/`（`ArchivedView` 已归档、`DeletedView` 回收站）、`category/`（`CategoriesView` 分类管理）。
-- `types/index.ts`：前后端共享类型 + 领域配置常量（`domainConfig`，与后端一致）。
-- `utils/`：按类型分子目录，入口统一为 `index.ts`——`date/`（日期格式化、剩余天数文案）、`status/`（状态色映射）、`seo/`（SEO 标题与 meta 更新）。
-- `assets/styles/`：`tokens.css`（设计令牌 CSS 变量）、`base.css`（reset + 通用按钮/输入/表单样式）。
-- 组件用 `<script setup lang="ts">`；路径别名 `@` 指向 `src`（见 `tsconfig.app.json` 与 `vite.config.ts`）。
-- 图表用 ECharts，时间处理用 Day.js。
 
 ### 端口速查
 | 服务 | 端口 |
