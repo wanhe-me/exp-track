@@ -1,4 +1,4 @@
-import { pingDatabase } from '../../db/mysql.js'
+import { getDb } from '../../dal/index.js'
 
 export interface HealthReport {
   status: 'ok' | 'degraded'
@@ -18,7 +18,7 @@ export const getHealthReport = async (): Promise<HealthReport> => {
   let reachable = false
   let dbError: string | undefined
   try {
-    await pingDatabase()
+    await getDb().ping()
     reachable = true
   } catch (err) {
     dbError = err instanceof Error ? err.message : String(err)

@@ -18,11 +18,39 @@ const intEnv = (name: string, fallback: number): number => {
   return parsed
 }
 
+export type DbDriver = 'sqlite' | 'mysql'
+
+export type BillingCycle = 'month' | 'quarter' | 'year'
+
+export type SubscriptionView = 'active' | 'archived' | 'deleted'
+
+export type SubscriptionStatus = 'expired' | 'soon7' | 'soon30' | 'sufficient'
+
+const dbDriver: DbDriver =
+  process.env.DB_TYPE === 'mysql' ? 'mysql' : 'sqlite'
+
+// 领域配置（PRD 第 5 章），前后端各一份且保持一致
+export const domainConfig = {
+  statusThresholds: {
+    soon7: intEnv('SOON7_THRESHOLD', 7),
+    soon30: intEnv('SOON30_THRESHOLD', 30),
+  },
+  timeline: {
+    rangeDays: intEnv('TIMELINE_RANGE_DAYS', 90),
+  },
+  dateFormat: 'YYYY-MM-DD',
+  currencySymbol: '¥',
+} as const
+
 export const config = {
   env: process.env.NODE_ENV ?? 'development',
   host: process.env.HOST ?? '127.0.0.1',
   port: intEnv('PORT', 15180),
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://127.0.0.1:15173',
+  dbDriver,
+  sqlite: {
+    path: process.env.SQLITE_PATH ?? './data/exp-track.db',
+  },
   mysql: {
     host: process.env.MYSQL_HOST ?? '127.0.0.1',
     port: intEnv('MYSQL_PORT', 13306),
@@ -31,6 +59,7 @@ export const config = {
     database: required('MYSQL_DATABASE', 'exp_track'),
     connectionLimit: intEnv('MYSQL_CONNECTION_LIMIT', 10),
   },
+  domain: domainConfig,
 } as const
 
 export type AppConfig = typeof config

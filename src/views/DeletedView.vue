@@ -1,0 +1,80 @@
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useSubscriptionStore } from '@/stores/subscription'
+import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
+import SubscriptionCard from '@/components/SubscriptionCard.vue'
+import EmptyState from '@/components/base/EmptyState.vue'
+
+const subscriptionStore = useSubscriptionStore()
+const { subscriptions, loading } = storeToRefs(subscriptionStore)
+
+const actions = useSubscriptionActions('deleted')
+
+onMounted(async () => {
+  await subscriptionStore.setView('deleted')
+})
+</script>
+
+<template>
+  <div class="deleted-view">
+    <div class="page-header">
+      <h1 class="page-title">回收站</h1>
+      <p class="page-desc">已软删除的订阅，可随时恢复</p>
+    </div>
+
+    <div v-if="loading" class="loading-state">加载中...</div>
+
+    <EmptyState
+      v-else-if="subscriptions.length === 0"
+      title="回收站为空"
+      description="删除的订阅会暂存在这里，可恢复"
+    />
+
+    <div v-else class="card-grid">
+      <SubscriptionCard
+        v-for="sub in subscriptions"
+        :key="sub.id"
+        :subscription="sub"
+        view="deleted"
+        @restore="actions.handleRestore"
+      />
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.deleted-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.page-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+}
+
+.page-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+.loading-state {
+  padding: var(--space-12);
+  text-align: center;
+  color: var(--color-text-tertiary);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-4);
+}
+</style>

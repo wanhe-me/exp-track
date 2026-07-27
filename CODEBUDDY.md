@@ -4,13 +4,14 @@
 
 exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP 第一阶段，个人用户本地优先、单实例、本地数据）。单仓库前后端分离：
 - **根目录**：前端（Vue 3 + Vite + TypeScript），端口 15173。
-- **`backend/`**：后端（Express 5 + TypeScript + mysql2），端口 15180。
+- **`backend/`**：后端（Express 5 + TypeScript），端口 15180。
 
 前端经 Axios 调后端 REST API，双方遵守统一响应信封。产品核心痛点是「不知道有哪些订阅、何时过期」，可视化只做「未来到期时间轴」一张图（P1）。详见 `docs/PRD/expTrack_PRD.md`。
 
-> **重要：PRD 为权威目标，以下为与当前代码的偏差**（新建/扩展功能以 PRD 数据模型为准对齐实现，不要被现有表结构误导）
-> - PRD 规划 SQLite + MySQL 双库、经 DAL 抽象屏蔽方言；**当前代码仅实现 MySQL**（`backend/src/db/mysql.ts`，依赖 `mysql2`），不存在 DAL 抽象层与 SQLite 实现。
-> - PRD 数据模型 `subscription`（`category_id` 外键、`price`、`billing_cycle` 仅 month/quarter/year、`expire_date` 必填、`archived`、`deleted_at` 软删除）；**当前数据库尚未建立订阅/分类表**（原 `init.sql` 已删除），实现时须按 PRD 4.1/4.2 新建表并以其为准对齐。
+> **当前实现状态**：MVP 第一阶段功能（FR-01~FR-10）已全部实现并跑通。
+> - **快速部署（SQLite）**已完整可用，为默认部署模式，零外部依赖、开箱即用。
+> - **稳定部署（MySQL）**：DAL 抽象接口已定义（`DbAdapter`），但 MySQL 适配器实现尚未完成（`db/mysql.ts` 连接池保留但未接入 DAL）。需要时按 `dal/sqlite.ts` 的模式实现 `dal/mysql.ts` 并在 `dal/index.ts` 注册。
+> - 数据模型（`subscription` / `category` 两表）按 PRD 4.1/4.2 实现，由 DAL 自动建表。
 
 ## 常用命令
 
@@ -29,12 +30,11 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 - `pnpm build`：`tsc` 编译到 `dist/`。
 - `pnpm start`：运行编译产物 `node dist/bootstrap/server.js`。
 - `pnpm type-check`：`tsc --noEmit`。
-- `pnpm lint`：eslint `--fix`（后端仅 eslint）。
+- `pnpm lint`：eslint `--fix`（**注**：backend 未安装 eslint 依赖，此命令暂不可用；根目录 `pnpm lint` 的 oxlint + eslint 已覆盖 backend `.ts` 文件检查）。
 
-### 数据库（Docker）
-- `cp .env.example .env`：根目录配置 MySQL/phpMyAdmin 端口与账号；`backend/` 下也需 `cp .env.example .env` 配置数据库连接与 CORS。
-- `docker compose up -d`：启动 MySQL 8.0 + phpMyAdmin。
-- MySQL 127.0.0.1:13306（库 `exp_track`），phpMyAdmin 127.0.0.1:18080。数据库初始化脚本待按 PRD 重建（原 `init.sql` 已删除），重建后删卷 `exp-track-mysql-data` 重启容器即可重新执行。
+### 数据库
+- **快速部署（默认，SQLite）**：无需任何容器或外部数据库服务。`DB_TYPE=sqlite`（默认），数据库文件存于 `backend/data/exp-track.db`（首次启动自动创建目录与建表）。
+- **稳定部署（MySQL，Docker）**：`cp .env.example .env` 配置 MySQL/phpMyAdmin 端口与账号 → `docker compose up -d` 启动 MySQL 8.0 + phpMyAdmin → `backend/.env` 设 `DB_TYPE=mysql`。**注**：MySQL DAL 适配器尚未实现，此模式暂不可用。
 
 > 本项目**未配置测试框架**（无 vitest/jest），暂无测试/单测命令。
 
@@ -46,14 +46,15 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 - 前端封装于 `src/lib/api.ts`：Axios 响应拦截器识别 `ok===false` 业务错误并 reject，调用方以 `unwrap<T>(res)` 取 `data`。类型为 `ApiEnvelope<T>`。
 
 ### 后端结构（`backend/src/`）
-按**业务域**组织在 `services/<domain>/`，每域通常含 `<domain>.controller.ts`（定义 `Router`、处理 HTTP、调 service、用 ok/fail 返回）与 `<domain>.service.ts`（纯业务逻辑、操作数据库）。新增域：建目录→写 controller+service→在 `http/router.ts` 用 `apiRouter.use(xxxRouter)` 挂载（路径前缀 `/api`）。参考 `services/health/`。
+按**业务域**组织在 `services/<domain>/`，每域通常含 `<domain>.controller.ts`（定义 `Router`、处理 HTTP、调 service、用 ok/fail 返回）与 `<domain>.service.ts`（纯业务逻辑、操作数据库、zod 校验）。新增域：建目录→写 controller+service→在 `http/router.ts` 用 `apiRouter.use(xxxRouter)` 挂载（路径前缀 `/api`）。参考已有域 `health/`、`category/`、`subscription/`。
 
 其余目录：
-- `bootstrap/`：`app.ts` 组装 Express 与中间件链；`server.ts` 启动入口，监听 SIGINT/SIGTERM 优雅关闭连接池。
-- `config/`：`index.ts` 从环境变量加载并导出 `config` 对象；`timezone.ts` 被其副作用导入以设 `TZ=Asia/Shanghai`。`required` 环境变量缺失时启动即抛错。
-- `db/mysql.ts`：mysql2 连接池懒加载单例，暴露 `getPool()`/`closePool()`/`pingDatabase()`。
-- `middlewares/`：`request-logger`（请求耗时）、`error-handler`（兜底返回 500）。
-- `utils/`：`response.ts`、日志等。
+- `bootstrap/`：`app.ts` 组装 Express 与中间件链；`server.ts` 启动入口，启动时调 `initDb()` 建表，监听 SIGINT/SIGTERM 优雅关闭 DAL。
+- `config/`：`index.ts` 从环境变量加载并导出 `config` 对象（含 `dbDriver`、`sqlite`、`mysql`、`domain` 领域配置）；`timezone.ts` 被其副作用导入以设 `TZ=Asia/Shanghai`。
+- `dal/`：**数据访问层**，屏蔽 SQLite/MySQL 方言差异。`types.ts` 定义 `DbAdapter` 接口与行类型、`DomainError`；`sqlite.ts` 为 SQLite 实现（`better-sqlite3`，自动建表）；`index.ts` 为工厂 `getDb()`/`initDb()`/`closeDb()`，按 `config.dbDriver` 选择适配器。**所有业务代码经 `getDb()` 操作数据库，勿直接 import 具体数据库驱动**。
+- `db/mysql.ts`：mysql2 连接池（旧实现，保留备用，未接入 DAL；MySQL 适配器实现后应迁移至 `dal/mysql.ts`）。
+- `middlewares/`：`request-logger`（请求耗时）、`error-handler`（统一处理 `DomainError` 业务错误、`ZodError` 校验错误、兜底 500）。
+- `utils/`：`response.ts`、`logger.ts`、`date.ts`（剩余天数计算、状态四档判定、日期校验）。
 
 **配置读取约定**：后端所有配置经 `config` 对象获取，勿直接读 `process.env`。
 
@@ -61,26 +62,34 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 
 ### 前端结构（`src/`）
 - `lib/api.ts`：Axios 实例 + 拦截器 + `unwrap`，基址由 `VITE_API_BASE_URL` 控制（默认 `http://127.0.0.1:15180`）。
-- `router/index.ts`：Vue Router 路由（当前 `routes` 为空，待按业务填充）。
-- `stores/`：Pinia（setup 风格 store，当前仅示例 `counter.ts`）。
+- `api/`：业务接口封装（`category.ts`、`subscription.ts`），统一调用入口。
+- `router/index.ts`：Vue Router 路由，已配置看板/时间轴/已归档/回收站/分类五个页面。
+- `stores/`：Pinia（setup 风格 store），`category.ts`、`subscription.ts`。
+- `composables/`：`useSubscriptionActions.ts`（订阅增删改归档恢复的表单与确认弹窗逻辑复用）。
+- `components/base/`：公共原子组件（`StatusBadge`、`CategoryTag`、`ConfirmDialog`、`EmptyState`）。
+- `components/`：业务组件（`SubscriptionCard`、`SubscriptionFormDialog`）。
+- `layouts/`：`DefaultLayout.vue`（顶部导航 + 内容区）。
+- `views/`：`DashboardView`（看板）、`TimelineView`（时间轴）、`ArchivedView`（已归档）、`DeletedView`（回收站）、`CategoriesView`（分类管理）。
+- `types/index.ts`：前后端共享类型 + 领域配置常量（`domainConfig`，与后端一致）。
+- `utils/`：`date.ts`（日期格式化、剩余天数文案）、`status.ts`（状态色映射）。
+- `assets/styles/`：`tokens.css`（设计令牌 CSS 变量）、`base.css`（reset + 通用按钮/输入/表单样式）。
 - 组件用 `<script setup lang="ts">`；路径别名 `@` 指向 `src`（见 `tsconfig.app.json` 与 `vite.config.ts`）。
 - 图表用 ECharts，时间处理用 Day.js。
-- PRD 规划目录（`components/base/`、`composables/`、`views/`、`assets/styles/` 设计令牌等）尚未落地，新页面按 PRD 第 7 章归口避免散落。
 
 ### 端口速查
 | 服务 | 端口 |
 |------|------|
 | 前端 dev server | 15173 |
 | 后端 API | 15180 |
-| MySQL | 13306 |
-| phpMyAdmin | 18080 |
+| MySQL（稳定部署，Docker） | 13306 |
+| phpMyAdmin（稳定部署，Docker） | 18080 |
 
 ## 工程规范与领域约束（来自 PRD）
 
 ### 接口与工程规范（PRD 第 7 章）
 - **接口扩展原则**：能改造兼容现有接口的不要新增端点；新增字段只增不删，保留向后兼容；统一响应信封；功能相近查询优先合并。
 - **目录结构（7.1）**：公共能力按 `src/` 下 `api/ components/base/ composables/ layouts/ router/ stores/ views/ types/ utils/` 归口；禁止业务页面内重复定义同类能力。
-- **设计令牌与状态色（7.2）**：色彩/间距/圆角/字号用 CSS 变量；四档状态色（已过期红/7天内橙/30天内黄/充足灰绿）禁止组件硬编码。
+- **设计令牌与状态色（7.2）**：色彩/间距/圆角/字号用 CSS 变量（`assets/styles/tokens.css`）；四档状态色（已过期红/7天内橙/30天内黄/充足灰绿）禁止组件硬编码。
 - **公共组件（7.3）**：重复 UI 抽为公共组件（StatusBadge、SubscriptionCard、CategoryTag、ConfirmDialog、EmptyState）；props 驱动、无副作用。
 - **视觉一致性（7.4）**：颜色/间距/圆角/字号只能用设计令牌。
 - **Lint**：根目录先 oxlint 后 eslint；`.editorconfig` 2 空格、LF、行宽 100；前后端 TS 均开 `noUncheckedIndexedAccess`。
@@ -92,3 +101,6 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 - **软删除/归档（FR-03/04、Ch.4.3）**：删除置 `deleted_at` 且二次确认；默认视图 `deleted_at IS NULL AND archived=false`，已归档 `archived=true`，已删除 `deleted_at IS NOT NULL`。
 - **分类（FR-10）**：名称 ≤50 唯一；**禁止删除被引用分类**。
 - **货币**：本阶段统一人民币 `¥`，多币种列入第二阶段。
+
+## 待办（PRD 目标尚未完成）
+- **MySQL DAL 适配器**：PRD 验收要求快速部署（SQLite）与稳定部署（MySQL）均可运行。当前仅 SQLite 适配器实现完毕；需按 `dal/sqlite.ts` 模式实现 `dal/mysql.ts` 并在 `dal/index.ts` 的 `getDb()` 中注册 `mysql` 分支。
