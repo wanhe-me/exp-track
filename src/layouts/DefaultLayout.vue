@@ -27,7 +27,7 @@ const navItems = [
     <header class="layout-header glass">
       <div class="header-inner">
         <RouterLink to="/" class="logo">
-          <span class="logo-icon">⏰</span>
+          <FaIcon icon="clock" class="logo-icon" />
           <span class="logo-text">exp-track</span>
         </RouterLink>
         <div class="header-right">
@@ -94,7 +94,9 @@ const navItems = [
 }
 
 .logo-icon {
-  font-size: var(--font-size-xl);
+  width: 20px;
+  height: 20px;
+  color: var(--color-primary);
 }
 
 .header-right {

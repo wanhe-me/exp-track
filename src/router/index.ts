@@ -58,6 +58,22 @@ const routes: RouteRecordRaw[] = [
           description: '自定义订阅分类，集中管理分类的增删改，避免重复造轮子。',
         },
       },
+      {
+        path: 'error',
+        name: 'error',
+        component: () => import('@/views/error/ErrorView.vue'),
+        meta: {
+          title: '出错了',
+        },
+      },
+      {
+        path: ':pathMatch(.*)*',
+        name: 'not-found',
+        component: () => import('@/views/error/NotFoundView.vue'),
+        meta: {
+          title: '页面未找到',
+        },
+      },
     ],
   },
 ]

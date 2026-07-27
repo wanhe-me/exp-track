@@ -16,6 +16,9 @@
     "lint:eslint": "eslint . --fix --cache"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^7.3.1",
+    "@fortawesome/free-solid-svg-icons": "^7.3.1",
+    "@fortawesome/vue-fontawesome": "^3.3.3",
     "axios": "^1.7.9",
     "dayjs": "^1.11.13",
     "echarts": "^5.5.1",
