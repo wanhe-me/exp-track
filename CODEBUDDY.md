@@ -69,9 +69,9 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 - `components/base/`：公共原子组件（`StatusBadge`、`CategoryTag`、`ConfirmDialog`、`EmptyState`）。
 - `components/`：业务组件（`SubscriptionCard`、`SubscriptionFormDialog`）。
 - `layouts/`：`DefaultLayout.vue`（顶部导航 + 内容区）。
-- `views/`：`DashboardView`（看板）、`TimelineView`（时间轴）、`ArchivedView`（已归档）、`DeletedView`（回收站）、`CategoriesView`（分类管理）。
+- `views/`：按业务模块分子目录——`dashboard/`（`DashboardView` 看板）、`timeline/`（`TimelineView` 时间轴）、`subscription/`（`ArchivedView` 已归档、`DeletedView` 回收站）、`category/`（`CategoriesView` 分类管理）。
 - `types/index.ts`：前后端共享类型 + 领域配置常量（`domainConfig`，与后端一致）。
-- `utils/`：`date.ts`（日期格式化、剩余天数文案）、`status.ts`（状态色映射）。
+- `utils/`：按类型分子目录，入口统一为 `index.ts`——`date/`（日期格式化、剩余天数文案）、`status/`（状态色映射）、`seo/`（SEO 标题与 meta 更新）。
 - `assets/styles/`：`tokens.css`（设计令牌 CSS 变量）、`base.css`（reset + 通用按钮/输入/表单样式）。
 - 组件用 `<script setup lang="ts">`；路径别名 `@` 指向 `src`（见 `tsconfig.app.json` 与 `vite.config.ts`）。
 - 图表用 ECharts，时间处理用 Day.js。
