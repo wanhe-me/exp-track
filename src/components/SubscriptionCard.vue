@@ -21,7 +21,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="sub-card" :class="`is-${props.subscription.status}`">
+  <div class="sub-card glass" :class="`is-${props.subscription.status}`">
     <div class="sub-card-header">
       <div class="sub-card-title-row">
         <h3 class="sub-card-name">{{ props.subscription.name }}</h3>
@@ -74,8 +74,6 @@ const emit = defineEmits<{
 
 <style scoped>
 .sub-card {
-  background-color: var(--color-bg-card);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-4) var(--space-5);
   display: flex;
@@ -83,27 +81,30 @@ const emit = defineEmits<{
   gap: var(--space-3);
   transition:
     box-shadow var(--transition-fast),
-    border-color var(--transition-fast);
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .sub-card:hover {
-  box-shadow: var(--shadow-md);
+  background: var(--glass-bg-hover);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 .sub-card.is-expired {
-  border-left: 3px solid var(--color-status-expired);
+  border-left: 4px solid var(--color-status-expired);
 }
 
 .sub-card.is-soon7 {
-  border-left: 3px solid var(--color-status-soon7);
+  border-left: 4px solid var(--color-status-soon7);
 }
 
 .sub-card.is-soon30 {
-  border-left: 3px solid var(--color-status-soon30);
+  border-left: 4px solid var(--color-status-soon30);
 }
 
 .sub-card.is-sufficient {
-  border-left: 3px solid var(--color-status-sufficient);
+  border-left: 4px solid var(--color-status-sufficient);
 }
 
 .sub-card-header {
@@ -175,7 +176,7 @@ const emit = defineEmits<{
 .sub-card-note {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  background-color: var(--color-bg-page);
+  background-color: var(--color-bg-hover);
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3);
   line-height: var(--line-height-base);

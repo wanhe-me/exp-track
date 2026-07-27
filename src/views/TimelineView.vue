@@ -18,29 +18,48 @@ let chart: echarts.ECharts | null = null
 
 const timelineData = computed(() => subscriptionStore.timelineSubscriptions)
 
-const statusColorMap: Record<SubscriptionStatus, string> = {
-  expired: '#e5484d',
-  soon7: '#f0772f',
-  soon30: '#d4a017',
-  sufficient: '#3a9d6b',
+const getCssVar = (name: string): string => {
+  if (typeof document === 'undefined') return ''
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
+
+const statusColors = computed<Record<SubscriptionStatus, string>>(() => ({
+  expired: getCssVar('--color-status-expired'),
+  soon7: getCssVar('--color-status-soon7'),
+  soon30: getCssVar('--color-status-soon30'),
+  sufficient: getCssVar('--color-status-sufficient'),
+}))
 
 const buildOption = (): echarts.EChartsOption => {
   const range = domainConfig.timeline.rangeDays
   const subs = timelineData.value
+  const colors = statusColors.value
+  const textSecondary = getCssVar('--color-text-secondary')
+  const textTertiary = getCssVar('--color-text-tertiary')
+  const borderColor = getCssVar('--color-border-light')
+  const bgPage = getCssVar('--color-bg-page')
+
   const data = subs.map((s) => ({
     value: [s.remainingDays, s.name],
-    itemStyle: { color: statusColorMap[s.status] },
+    itemStyle: { color: colors[s.status] },
   }))
 
   return {
     title: {
       text: `未来 ${range} 天到期分布`,
       left: 'center',
-      textStyle: { fontSize: 16, fontWeight: 600 },
+      textStyle: {
+        fontSize: 16,
+        fontWeight: 600,
+        color: getCssVar('--color-text-primary'),
+      },
     },
     tooltip: {
       trigger: 'item',
+      backgroundColor: getCssVar('--glass-bg'),
+      borderColor: getCssVar('--glass-border-strong'),
+      textStyle: { color: getCssVar('--color-text-primary') },
+      extraCssText: `backdrop-filter: ${getCssVar('--glass-blur')}; -webkit-backdrop-filter: ${getCssVar('--glass-blur')};`,
       formatter: (params: unknown) => {
         const p = params as { dataIndex: number }
         const sub = subs[p.dataIndex]
@@ -62,17 +81,23 @@ const buildOption = (): echarts.EChartsOption => {
       min: 0,
       max: range,
       interval: Math.ceil(range / 9),
-      splitLine: { lineStyle: { color: '#f2f3f5' } },
+      axisLine: { lineStyle: { color: borderColor } },
+      axisLabel: { color: textSecondary },
+      nameTextStyle: { color: textTertiary },
+      splitLine: { lineStyle: { color: borderColor } },
     },
     yAxis: {
       type: 'category',
       data: subs.map((s) => s.name),
       inverse: true,
+      axisLine: { lineStyle: { color: borderColor } },
       axisLabel: {
         width: 120,
         overflow: 'truncate',
         fontSize: 12,
+        color: textSecondary,
       },
+      splitLine: { lineStyle: { color: borderColor } },
     },
     series: [
       {
@@ -80,7 +105,7 @@ const buildOption = (): echarts.EChartsOption => {
         symbolSize: 16,
         data,
         emphasis: {
-          itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' },
+          itemStyle: { shadowBlur: 10, shadowColor: bgPage },
         },
       },
     ],
@@ -132,15 +157,15 @@ watch(timelineData, () => {
       :description="`未来 ${domainConfig.timeline.rangeDays} 天内没有即将到期的订阅`"
     />
 
-    <div v-else class="chart-wrapper">
+    <div v-else class="chart-wrapper glass">
       <div ref="chartRef" class="chart"></div>
     </div>
 
-    <div v-if="timelineData.length > 0" class="timeline-list">
+    <div v-if="timelineData.length > 0" class="timeline-list glass">
       <h2 class="section-title">即将到期列表</h2>
       <div class="list-items">
         <div v-for="sub in timelineData" :key="sub.id" class="list-item" :class="`is-${sub.status}`">
-          <span class="item-dot" :style="{ backgroundColor: statusColorMap[sub.status] }"></span>
+          <span class="item-dot" :style="{ backgroundColor: statusColors[sub.status] }"></span>
           <span class="item-name">{{ sub.name }}</span>
           <span class="item-date">{{ formatDate(sub.expireDate) }}</span>
           <span class="item-remaining">{{ remainingDaysLabel(sub.remainingDays) }}</span>
@@ -157,31 +182,7 @@ watch(timelineData, () => {
   gap: var(--space-5);
 }
 
-.page-header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.page-title {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-}
-
-.page-desc {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
-}
-
-.loading-state {
-  padding: var(--space-12);
-  text-align: center;
-  color: var(--color-text-tertiary);
-}
-
 .chart-wrapper {
-  background-color: var(--color-bg-card);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
 }
@@ -192,8 +193,6 @@ watch(timelineData, () => {
 }
 
 .timeline-list {
-  background-color: var(--color-bg-card);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
 }

@@ -109,7 +109,7 @@ const confirmDelete = async (): Promise<void> => {
     />
 
     <div v-else class="category-list">
-      <div v-for="cat in categories" :key="cat.id" class="category-item">
+      <div v-for="cat in categories" :key="cat.id" class="category-item glass">
         <template v-if="editingId === cat.id">
           <input v-model="editingName" class="input edit-input" maxlength="50" />
           <button class="btn btn-sm btn-primary" @click="saveEdit">保存</button>
@@ -143,32 +143,10 @@ const confirmDelete = async (): Promise<void> => {
   gap: var(--space-4);
 }
 
-.page-header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.page-title {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-}
-
-.page-desc {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
-}
-
 .create-section {
   display: flex;
   gap: var(--space-3);
   max-width: 480px;
-}
-
-.loading-state {
-  padding: var(--space-12);
-  text-align: center;
-  color: var(--color-text-tertiary);
 }
 
 .category-list {
@@ -184,9 +162,15 @@ const confirmDelete = async (): Promise<void> => {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  background-color: var(--color-bg-card);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.category-item:hover {
+  background: var(--glass-bg-hover);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 .edit-input {

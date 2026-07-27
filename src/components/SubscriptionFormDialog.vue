@@ -161,7 +161,7 @@ const billingOptions: { value: BillingCycle; label: string }[] = [
 <template>
   <Teleport to="body">
     <div v-if="props.modelValue" class="form-overlay" @click.self="close">
-      <div class="form-dialog">
+      <div class="form-dialog glass">
         <div class="form-header">
           <h2 class="form-title">{{ isEdit ? '编辑订阅' : '添加订阅' }}</h2>
           <button class="form-close" @click="close">×</button>
@@ -261,9 +261,7 @@ const billingOptions: { value: BillingCycle; label: string }[] = [
 }
 
 .form-dialog {
-  background-color: var(--color-bg-card);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
   width: 560px;
   max-width: calc(100vw - var(--space-8));
   max-height: calc(100vh - var(--space-8));
@@ -285,16 +283,33 @@ const billingOptions: { value: BillingCycle; label: string }[] = [
 }
 
 .form-close {
-  border: none;
-  background: none;
-  font-size: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-hover);
+  font-size: 22px;
   line-height: 1;
   color: var(--color-text-tertiary);
-  padding: var(--space-1);
+  padding: 0;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .form-close:hover {
   color: var(--color-text-primary);
+  border-color: var(--color-border);
+  background: var(--color-bg-active);
+}
+
+.form-close:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
 }
 
 .form-content {

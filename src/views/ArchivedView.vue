@@ -75,32 +75,4 @@ const onSubmit = async (input: SubscriptionInput, id: number | null): Promise<vo
   flex-direction: column;
   gap: var(--space-5);
 }
-
-.page-header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.page-title {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-}
-
-.page-desc {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
-}
-
-.loading-state {
-  padding: var(--space-12);
-  text-align: center;
-  color: var(--color-text-tertiary);
-}
-
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: var(--space-4);
-}
 </style>

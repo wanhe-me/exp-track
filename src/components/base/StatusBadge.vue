@@ -43,10 +43,11 @@ const bgVar = (s: SubscriptionStatus): string => {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  padding: var(--space-1) var(--space-2);
+  min-height: var(--size-badge-height);
+  padding: 0 var(--space-2);
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
   white-space: nowrap;
 }

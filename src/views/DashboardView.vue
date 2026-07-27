@@ -118,25 +118,16 @@ const onSearch = (): void => {
   gap: var(--space-4);
 }
 
-.page-title {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  margin-bottom: var(--space-1);
-}
-
-.page-desc {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
-}
-
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-3);
   align-items: center;
 }
 
 .search-input {
   flex: 1;
+  min-width: 200px;
   max-width: 320px;
 }
 
@@ -145,15 +136,21 @@ const onSearch = (): void => {
   min-width: 160px;
 }
 
-.loading-state {
-  padding: var(--space-12);
-  text-align: center;
-  color: var(--color-text-tertiary);
-}
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
 
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: var(--space-4);
+  .search-input,
+  .filter-select {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .toolbar .btn {
+    width: 100%;
+  }
 }
 </style>

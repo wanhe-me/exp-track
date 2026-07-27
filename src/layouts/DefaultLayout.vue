@@ -2,6 +2,7 @@
 import { RouterLink, RouterView } from 'vue-router'
 import { computed } from 'vue'
 import { useSubscriptionStore } from '@/stores/subscription'
+import ThemeToggle from '@/components/base/ThemeToggle.vue'
 
 const subscriptionStore = useSubscriptionStore()
 
@@ -23,24 +24,27 @@ const navItems = [
 
 <template>
   <div class="layout">
-    <header class="layout-header">
+    <header class="layout-header glass">
       <div class="header-inner">
         <RouterLink to="/" class="logo">
           <span class="logo-icon">⏰</span>
           <span class="logo-text">exp-track</span>
         </RouterLink>
-        <nav class="nav">
-          <RouterLink
-            v-for="item in navItems"
-            :key="item.to"
-            :to="item.to"
-            class="nav-link"
-            :class="{ exact: item.exact }"
-          >
-            {{ item.label }}
-            <span v-if="item.to === '/' && alertCount > 0" class="nav-badge">{{ alertCount }}</span>
-          </RouterLink>
-        </nav>
+        <div class="header-right">
+          <nav class="nav">
+            <RouterLink
+              v-for="item in navItems"
+              :key="item.to"
+              :to="item.to"
+              class="nav-link"
+              :class="{ exact: item.exact }"
+            >
+              {{ item.label }}
+              <span v-if="item.to === '/' && alertCount > 0" class="nav-badge">{{ alertCount }}</span>
+            </RouterLink>
+          </nav>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
 
@@ -60,18 +64,17 @@ const navItems = [
 }
 
 .layout-header {
-  background-color: var(--color-bg-card);
-  border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
   z-index: 100;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .header-inner {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--space-6);
-  height: 56px;
+  height: var(--size-nav-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -94,6 +97,12 @@ const navItems = [
   font-size: var(--font-size-xl);
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
 .nav {
   display: flex;
   gap: var(--space-1);
@@ -101,7 +110,10 @@ const navItems = [
 
 .nav-link {
   position: relative;
-  padding: var(--space-2) var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 var(--space-4);
   border-radius: var(--radius-md);
   font-size: var(--font-size-base);
   color: var(--color-text-secondary);
@@ -111,7 +123,7 @@ const navItems = [
 }
 
 .nav-link:hover {
-  background-color: var(--color-bg-page);
+  background-color: var(--color-bg-hover);
   color: var(--color-text-primary);
 }
 
@@ -146,5 +158,35 @@ const navItems = [
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .header-inner {
+    padding: 0 var(--space-4);
+  }
+
+  .header-right {
+    gap: var(--space-2);
+  }
+
+  .nav {
+    max-width: calc(100vw - 160px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-link {
+    padding: 0 var(--space-3);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+
+  .main-inner {
+    padding: 0 var(--space-4);
+  }
 }
 </style>

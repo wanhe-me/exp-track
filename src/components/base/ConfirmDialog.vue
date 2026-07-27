@@ -40,15 +40,15 @@ defineExpose({ open, close })
 <template>
   <Teleport to="body">
     <div v-if="visible" class="confirm-overlay" @click.self="onCancel">
-      <div class="confirm-dialog">
+      <div class="confirm-dialog glass">
         <h3 v-if="props.title" class="confirm-title">{{ props.title }}</h3>
         <p class="confirm-message">{{ props.message }}</p>
         <div class="confirm-actions">
-          <button class="btn btn-sm" @click="onCancel">
+          <button class="btn" @click="onCancel">
             {{ props.cancelText ?? '取消' }}
           </button>
           <button
-            class="btn btn-sm"
+            class="btn"
             :class="props.danger ? 'btn-danger' : 'btn-primary'"
             @click="onConfirm"
           >
@@ -72,9 +72,7 @@ defineExpose({ open, close })
 }
 
 .confirm-dialog {
-  background-color: var(--color-bg-card);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
   padding: var(--space-6);
   width: 400px;
   max-width: calc(100vw - var(--space-8));
