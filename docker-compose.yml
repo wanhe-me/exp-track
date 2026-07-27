@@ -1,0 +1,63 @@
+services:
+  mysql:
+    image: mysql:8.0.45
+    container_name: exp-track-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-exp_track}
+      MYSQL_USER: ${MYSQL_USER:-exp_track}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-exp_track123}
+      TZ: Asia/Shanghai
+    ports:
+      - "${MYSQL_PORT:-13306}:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+      - --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/src/sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - 127.0.0.1
+        - -u
+        - root
+        - -p${MYSQL_ROOT_PASSWORD:-root123456}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - exp-track-net
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: exp-track-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 300M
+      TZ: Asia/Shanghai
+    ports:
+      - "${PHPMYADMIN_PORT:-18080}:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - exp-track-net
+
+volumes:
+  mysql_data:
+    name: exp-track-mysql-data
+
+networks:
+  exp-track-net:
+    name: exp-track-net
+    driver: bridge
