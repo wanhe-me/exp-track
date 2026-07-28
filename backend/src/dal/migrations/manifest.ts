@@ -53,7 +53,13 @@ const loadMysql = (file: string): MigrationEntry => {
 }
 
 // 仅 SQLite 方言迁移文件
-export const manifestSqlite: MigrationEntry[] = [loadSqlite('001_init')]
+export const manifestSqlite: MigrationEntry[] = [
+  loadSqlite('001_init'),
+  loadSqlite('002_quota'),
+]
 
 // 仅 MySQL 方言迁移文件
-export const manifestMysql: MigrationEntry[] = [loadMysql('001_init')]
+export const manifestMysql: MigrationEntry[] = [
+  loadMysql('001_init'),
+  loadMysql('002_quota'),
+]

@@ -11,7 +11,7 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 > **当前实现状态**：MVP 第一阶段功能（FR-01~FR-10）已全部实现并跑通。
 > - **快速部署（SQLite）**已完整可用，为默认部署模式，零外部依赖、开箱即用。
 > - **稳定部署（MySQL）**已完整可用：`docker compose up -d` 拉起 MySQL 8.0 + phpMyAdmin，`backend/.env` 设 `DB_TYPE=mysql` 即可。`dal/mysql.ts` 与 `migrator/mysql.ts` 实现完整，含 baseline 检测 + checksum 校验 + 事务。
-> - 数据模型（`subscription` / `category` 两表）按 PRD 4.1/4.2 实现，由自建迁移系统（`backend/src/dal/migrator/`）按版本号顺序自动建表与升级；已有数据库通过 baseline 检测安全迁移。双方言迁移脚本分目录维护（`migrations/sqlite/` 与 `migrations/mysql/`），各自在 `manifest.ts` 的 `manifestSqlite` / `manifestMysql` 注册。**当前以 MySQL 为开发主线**：新增迁移先写 MySQL 一份；SQLite 侧待 MySQL 版本开发完毕后单独建 PR 同步重建，避免双模式并行干扰功能测试。
+> - 数据模型（`subscription` / `category` 两表）按 PRD 4.1/4.2 实现，由自建迁移系统（`backend/src/dal/migrator/`）按版本号顺序自动建表与升级；已有数据库通过 baseline 检测安全迁移。双方言迁移脚本分目录维护（`migrations/sqlite/` 与 `migrations/mysql/`），各自在 `manifest.ts` 的 `manifestSqlite` / `manifestMysql` 注册。**当前以 MySQL 为开发主线**：新增迁移默认只写 MySQL 一份（迁移脚本 + `dal/mysql.ts` 适配器代码），同步更新 `sql/schema.sql`；SQLite 侧（迁移脚本 + `manifestSqlite` 注册 + `dal/sqlite.ts` 的 SQL 读写）待 MySQL 版本开发完毕后，**由开发者主动说明「同步 SQLite」再执行**——在此之前不写 SQLite 迁移、不完善 SQLite 的 SQL。期间 `dal/sqlite.ts` 因 `types/domain.ts` 类型变更导致 `tsc` 编译失败时，仅做最小改动让编译通过（返回 `*Row` 的映射函数给新增必填字段填合理默认值、可空字段填 `null`，但 INSERT/UPDATE SQL 不加新列），SQLite 部署模式期间不可用（运行时表无新列，属预期行为）。
 
 ## 常用命令
 
@@ -56,7 +56,7 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 |------|------|
 | 新增 / 修改后端接口或业务域 | `backend/src/services/<domain>/`、`http/router.ts`、`utils/response.ts`；参考 `health/` `category/` `subscription/` 中任一已有域 |
 | 操作数据库 / 加表 | `backend/src/dal/`、`types/domain.ts`（业务代码统一经 `getDb()`，勿直接 import 具体数据库驱动） |
-| 加字段 / 改表结构 | 走自建迁移系统：**先只写 MySQL 一份** `migrations/mysql/00X_xxx.sql` 并在 `manifest.ts` 的 `manifestMysql` 注册；SQLite 侧（`migrations/sqlite/` + `manifestSqlite`）待 MySQL 版本开发完毕后单独建 PR 同步重建（期间 SQLite 部署模式暂不可用，避免双模式并行干扰功能测试）。**禁止改 001_init.sql**（启动时校验 checksum，改动已应用迁移会拒绝启动）；同步更新根目录 `sql/schema.sql`（数据库表结构唯一可信源，MySQL 8.0 标准，供人工查阅；字段变更先改此文件再写迁移脚本）。`migrator/sqlite.ts` 与 `migrator/mysql.ts` 各自跑迁移 + baseline 检测 |
+| 加字段 / 改表结构 | 走自建迁移系统：**默认只写 MySQL 一份** `migrations/mysql/00X_xxx.sql` 并在 `manifest.ts` 的 `manifestMysql` 注册，同步更新根目录 `sql/schema.sql`（数据库表结构唯一可信源，MySQL 8.0 标准，供人工查阅；字段变更先改此文件再写迁移脚本）；SQLite 侧（`migrations/sqlite/` + `manifestSqlite` + `dal/sqlite.ts` 的 SQL 读写）待 MySQL 版本开发完毕后**由开发者主动说明「同步 SQLite」再执行**--在此之前只对 `dal/sqlite.ts` 做最小改动让 `tsc` 编译通过（新增必填字段填默认值、可空字段填 `null`，但 SQL 不加新列），SQLite 部署模式期间不可用。**禁止改 001_init.sql**（启动时校验 checksum，改动已应用迁移会拒绝启动）。`migrator/sqlite.ts` 与 `migrator/mysql.ts` 各自跑迁移 + baseline 检测 + checksum 校验 |
 | 改后端领域类型 | `backend/src/types/domain.ts`（勿从 `config` 或 `dal` 取领域类型） |
 | 改后端配置项 | `backend/src/config/index.ts`（所有配置经 `config` 对象，勿直接读 `process.env`） |
 | 新增 / 修改前端页面 | `src/views/`、`src/router/index.ts`、`src/stores/`、`src/api/` |

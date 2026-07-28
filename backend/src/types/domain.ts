@@ -8,6 +8,12 @@ export type SubscriptionView = 'active' | 'archived' | 'deleted'
 
 export type SubscriptionStatus = 'expired' | 'soon7' | 'soon30' | 'sufficient'
 
+// 订阅类型：standard 标准/功能解锁型（只看到期时间）/ quota 额度型（大模型 API 周月限额等）
+export type SubscriptionType = 'standard' | 'quota'
+
+// 额度周期标签：week 周 / month 月（纯展示，不自动重置）
+export type QuotaCycle = 'week' | 'month'
+
 // 行类型（DAL 返回，已转为 camelCase 与原生 TS 类型）
 export interface CategoryRow {
   id: number
@@ -26,6 +32,12 @@ export interface SubscriptionRow {
   expireDate: string
   autoRenew: boolean
   note: string | null
+  subscriptionType: SubscriptionType
+  quotaCycle: QuotaCycle | null
+  quotaTotal: number | null
+  quotaUsed: number | null
+  quotaRemaining: number | null
+  quotaUnit: string | null
   archived: boolean
   deletedAt: string | null
   createdAt: string
@@ -49,6 +61,12 @@ export interface CreateSubscriptionInput {
   expireDate: string
   autoRenew: boolean
   note: string | null
+  subscriptionType: SubscriptionType
+  quotaCycle: QuotaCycle | null
+  quotaTotal: number | null
+  quotaUsed: number | null
+  quotaRemaining: number | null
+  quotaUnit: string | null
 }
 
 export interface UpdateSubscriptionInput {
@@ -60,6 +78,12 @@ export interface UpdateSubscriptionInput {
   expireDate: string
   autoRenew: boolean
   note: string | null
+  subscriptionType: SubscriptionType
+  quotaCycle: QuotaCycle | null
+  quotaTotal: number | null
+  quotaUsed: number | null
+  quotaRemaining: number | null
+  quotaUnit: string | null
 }
 
 export interface SubscriptionFilter {

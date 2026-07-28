@@ -70,6 +70,12 @@ const mapSubscription = (row: MysqlRow): SubscriptionRow => ({
   expireDate: String(row.expire_date),
   autoRenew: Number(row.auto_renew) === 1,
   note: row.note === null ? null : String(row.note),
+  subscriptionType: String(row.subscription_type) as SubscriptionRow['subscriptionType'],
+  quotaCycle: row.quota_cycle === null ? null : (String(row.quota_cycle) as SubscriptionRow['quotaCycle']),
+  quotaTotal: row.quota_total === null ? null : Number(row.quota_total),
+  quotaUsed: row.quota_used === null ? null : Number(row.quota_used),
+  quotaRemaining: row.quota_remaining === null ? null : Number(row.quota_remaining),
+  quotaUnit: row.quota_unit === null ? null : String(row.quota_unit),
   archived: Number(row.archived) === 1,
   deletedAt: row.deleted_at === null ? null : String(row.deleted_at),
   createdAt: String(row.created_at),
@@ -209,8 +215,9 @@ export class MySqlAdapter implements DbAdapter {
   async createSubscription(input: CreateSubscriptionInput): Promise<SubscriptionRow> {
     const [result] = await this.conn().query<ResultSetHeader>(
       `INSERT INTO subscription
-         (name, category_id, price, billing_cycle, start_date, expire_date, auto_renew, note)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         (name, category_id, price, billing_cycle, start_date, expire_date, auto_renew, note,
+          subscription_type, quota_cycle, quota_total, quota_used, quota_remaining, quota_unit)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.name,
         input.categoryId,
@@ -220,6 +227,12 @@ export class MySqlAdapter implements DbAdapter {
         input.expireDate,
         input.autoRenew ? 1 : 0,
         input.note,
+        input.subscriptionType,
+        input.quotaCycle,
+        input.quotaTotal,
+        input.quotaUsed,
+        input.quotaRemaining,
+        input.quotaUnit,
       ],
     )
     const row = await this.getSubscriptionById(result.insertId)
@@ -235,6 +248,7 @@ export class MySqlAdapter implements DbAdapter {
       `UPDATE subscription SET
          name = ?, category_id = ?, price = ?, billing_cycle = ?,
          start_date = ?, expire_date = ?, auto_renew = ?, note = ?,
+         subscription_type = ?, quota_cycle = ?, quota_total = ?, quota_used = ?, quota_remaining = ?, quota_unit = ?,
          updated_at = NOW()
        WHERE id = ?`,
       [
@@ -246,6 +260,12 @@ export class MySqlAdapter implements DbAdapter {
         input.expireDate,
         input.autoRenew ? 1 : 0,
         input.note,
+        input.subscriptionType,
+        input.quotaCycle,
+        input.quotaTotal,
+        input.quotaUsed,
+        input.quotaRemaining,
+        input.quotaUnit,
         id,
       ],
     )

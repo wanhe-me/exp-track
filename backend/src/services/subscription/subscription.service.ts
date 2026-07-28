@@ -3,9 +3,11 @@ import { getDb } from '../../dal/index.js'
 import { DomainError } from '../../dal/types.js'
 import type {
   BillingCycle,
+  QuotaCycle,
   SubscriptionFilter,
   SubscriptionRow,
   SubscriptionStatus,
+  SubscriptionType,
   SubscriptionView,
 } from '../../types/domain.js'
 import {
@@ -20,6 +22,14 @@ const priceField = z
   .number({ message: '价格必填' })
   .nonnegative({ message: '价格不能为负' })
   .refine((v) => Math.round(v * 100) === v * 100, { message: '价格精度不能超过 2 位小数' })
+
+// 校验：额度数值字段为非负、精度 2 位小数、可空（与 priceField 同口径）
+const quotaNumberField = z
+  .number({ message: '额度必须为数字' })
+  .nonnegative({ message: '额度不能为负' })
+  .refine((v) => Math.round(v * 100) === v * 100, { message: '额度精度不能超过 2 位小数' })
+  .nullable()
+  .optional()
 
 export const subscriptionSchema = z.object({
   name: z
@@ -43,6 +53,12 @@ export const subscriptionSchema = z.object({
     .refine(isValidDateStr, { message: '到期日期格式必须为 YYYY-MM-DD' }),
   autoRenew: z.boolean().default(false),
   note: z.string().max(1000, { message: '备注长度不能超过 1000' }).nullable().optional(),
+  subscriptionType: z.enum(['standard', 'quota']).default('standard'),
+  quotaCycle: z.enum(['week', 'month']).nullable().optional(),
+  quotaTotal: quotaNumberField,
+  quotaUsed: quotaNumberField,
+  quotaRemaining: quotaNumberField,
+  quotaUnit: z.string().max(20, { message: '单位长度不能超过 20' }).nullable().optional(),
 })
 
 export interface SubscriptionDto {
@@ -56,6 +72,12 @@ export interface SubscriptionDto {
   expireDate: string
   autoRenew: boolean
   note: string | null
+  subscriptionType: SubscriptionType
+  quotaCycle: QuotaCycle | null
+  quotaTotal: number | null
+  quotaUsed: number | null
+  quotaRemaining: number | null
+  quotaUnit: string | null
   archived: boolean
   deletedAt: string | null
   createdAt: string
@@ -78,6 +100,12 @@ const buildDto = async (row: SubscriptionRow): Promise<SubscriptionDto> => {
     expireDate: row.expireDate,
     autoRenew: row.autoRenew,
     note: row.note,
+    subscriptionType: row.subscriptionType,
+    quotaCycle: row.quotaCycle,
+    quotaTotal: row.quotaTotal,
+    quotaUsed: row.quotaUsed,
+    quotaRemaining: row.quotaRemaining,
+    quotaUnit: row.quotaUnit,
     archived: row.archived,
     deletedAt: row.deletedAt,
     createdAt: row.createdAt,
@@ -96,6 +124,82 @@ const validateCrossFields = (startDate: string, expireDate: string): void => {
       400,
       { startDate, expireDate },
     )
+  }
+}
+
+// 额度校验与补全：standard 型清空所有额度字段；quota 型校验总额/已用/剩余
+// 一致性并补全缺失项（二选一填写场景，后端兜底计算另一个），保证入库三字段自洽。
+const normalizeQuota = (
+  parsed: Pick<
+    z.infer<typeof subscriptionSchema>,
+    'subscriptionType' | 'quotaCycle' | 'quotaTotal' | 'quotaUsed' | 'quotaRemaining' | 'quotaUnit'
+  >,
+): {
+  subscriptionType: SubscriptionType
+  quotaCycle: QuotaCycle | null
+  quotaTotal: number | null
+  quotaUsed: number | null
+  quotaRemaining: number | null
+  quotaUnit: string | null
+} => {
+  if (parsed.subscriptionType === 'standard') {
+    return {
+      subscriptionType: 'standard',
+      quotaCycle: null,
+      quotaTotal: null,
+      quotaUsed: null,
+      quotaRemaining: null,
+      quotaUnit: null,
+    }
+  }
+
+  // quota 型
+  if (!parsed.quotaCycle) {
+    throw new DomainError('INVALID_QUOTA', '额度型订阅必须选择额度周期', 400)
+  }
+  if (parsed.quotaTotal == null || parsed.quotaTotal <= 0) {
+    throw new DomainError('INVALID_QUOTA', '额度型订阅必须填写总额度且大于 0', 400)
+  }
+
+  const total = parsed.quotaTotal
+  const used = parsed.quotaUsed ?? null
+  const remaining = parsed.quotaRemaining ?? null
+
+  let finalUsed: number
+  let finalRemaining: number
+  if (used != null && remaining != null) {
+    // 二者都填：校验一致性（允许 0.01 精度误差）
+    if (Math.abs(used + remaining - total) > 0.01) {
+      throw new DomainError(
+        'INVALID_QUOTA',
+        '已使用 + 剩余 不等于总额度',
+        400,
+        { used, remaining, total },
+      )
+    }
+    finalUsed = used
+    finalRemaining = remaining
+  } else if (used != null) {
+    finalUsed = used
+    finalRemaining = Math.round((total - used) * 100) / 100
+  } else if (remaining != null) {
+    finalRemaining = remaining
+    finalUsed = Math.round((total - remaining) * 100) / 100
+  } else {
+    throw new DomainError('INVALID_QUOTA', '额度型订阅必须填写已使用或剩余额度', 400)
+  }
+
+  if (finalUsed < 0 || finalRemaining < 0) {
+    throw new DomainError('INVALID_QUOTA', '已使用或剩余额度不能为负', 400)
+  }
+
+  return {
+    subscriptionType: 'quota',
+    quotaCycle: parsed.quotaCycle,
+    quotaTotal: total,
+    quotaUsed: finalUsed,
+    quotaRemaining: finalRemaining,
+    quotaUnit: parsed.quotaUnit?.trim() || null,
   }
 }
 
@@ -133,6 +237,7 @@ export const createSubscription = async (input: unknown): Promise<SubscriptionDt
   const parsed = subscriptionSchema.parse(input)
   validateCrossFields(parsed.startDate, parsed.expireDate)
   await validateCategoryExists(parsed.categoryId)
+  const quota = normalizeQuota(parsed)
 
   const row = await getDb().createSubscription({
     name: parsed.name,
@@ -143,6 +248,12 @@ export const createSubscription = async (input: unknown): Promise<SubscriptionDt
     expireDate: parsed.expireDate,
     autoRenew: parsed.autoRenew,
     note: parsed.note ?? null,
+    subscriptionType: quota.subscriptionType,
+    quotaCycle: quota.quotaCycle,
+    quotaTotal: quota.quotaTotal,
+    quotaUsed: quota.quotaUsed,
+    quotaRemaining: quota.quotaRemaining,
+    quotaUnit: quota.quotaUnit,
   })
   return buildDto(row)
 }
@@ -159,6 +270,7 @@ export const updateSubscription = async (
   const parsed = subscriptionSchema.parse(input)
   validateCrossFields(parsed.startDate, parsed.expireDate)
   await validateCategoryExists(parsed.categoryId)
+  const quota = normalizeQuota(parsed)
 
   const row = await getDb().updateSubscription(id, {
     name: parsed.name,
@@ -169,6 +281,12 @@ export const updateSubscription = async (
     expireDate: parsed.expireDate,
     autoRenew: parsed.autoRenew,
     note: parsed.note ?? null,
+    subscriptionType: quota.subscriptionType,
+    quotaCycle: quota.quotaCycle,
+    quotaTotal: quota.quotaTotal,
+    quotaUsed: quota.quotaUsed,
+    quotaRemaining: quota.quotaRemaining,
+    quotaUnit: quota.quotaUnit,
   })
   if (!row) {
     throw new DomainError('SUBSCRIPTION_NOT_FOUND', `订阅不存在: id=${id}`, 404)

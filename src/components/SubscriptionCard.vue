@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Subscription, SubscriptionView } from '@/types'
-import { BILLING_CYCLE_LABELS } from '@/types'
+import { BILLING_CYCLE_LABELS, QUOTA_CYCLE_LABELS } from '@/types'
 import { domainConfig } from '@/types'
 import { formatDate, remainingDaysLabel } from '@/utils/date'
 import StatusBadge from './base/display/StatusBadge.vue'
@@ -18,6 +19,28 @@ const emit = defineEmits<{
   unarchive: [subscription: Subscription]
   restore: [subscription: Subscription]
 }>()
+
+const isQuota = computed(() => props.subscription.subscriptionType === 'quota')
+
+const quotaPercent = computed(() => {
+  const sub = props.subscription
+  if (!isQuota.value || sub.quotaTotal == null || sub.quotaTotal <= 0) return 0
+  const pct = ((sub.quotaRemaining ?? 0) / sub.quotaTotal) * 100
+  return Math.max(0, Math.min(100, Math.round(pct * 100) / 100))
+})
+
+const quotaRemainingText = computed(() => {
+  const sub = props.subscription
+  if (!isQuota.value) return ''
+  const unit = sub.quotaUnit ? ` ${sub.quotaUnit}` : ''
+  return `${sub.quotaRemaining ?? 0} / ${sub.quotaTotal ?? 0}${unit}`
+})
+
+const quotaCycleText = computed(() => {
+  const sub = props.subscription
+  if (!isQuota.value || !sub.quotaCycle) return ''
+  return `${QUOTA_CYCLE_LABELS[sub.quotaCycle] ?? ''}限额`
+})
 </script>
 
 <template>
@@ -49,6 +72,17 @@ const emit = defineEmits<{
           <span class="info-value">{{ props.subscription.autoRenew ? '是' : '否' }}</span>
         </div>
       </div>
+
+      <div v-if="isQuota" class="quota-bar">
+        <div class="quota-bar-header">
+          <span class="quota-bar-label">{{ quotaCycleText }}</span>
+          <span class="quota-bar-value">{{ quotaRemainingText }} · {{ quotaPercent }}%</span>
+        </div>
+        <div class="quota-bar-track">
+          <div class="quota-bar-fill" :style="{ width: quotaPercent + '%' }"></div>
+        </div>
+      </div>
+
       <p v-if="props.subscription.note" class="sub-card-note">{{ props.subscription.note }}</p>
     </div>
 
@@ -171,6 +205,43 @@ const emit = defineEmits<{
 
 .sub-card.is-soon30 .info-value.remaining {
   color: var(--color-status-soon30);
+}
+
+.quota-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.quota-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.quota-bar-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.quota-bar-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.quota-bar-track {
+  height: 0.375rem;
+  background: var(--color-bg-hover);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.quota-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+  transition: width var(--transition-fast);
 }
 
 .sub-card-note {

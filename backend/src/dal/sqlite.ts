@@ -33,6 +33,12 @@ const mapSubscription = (row: SqliteRow): SubscriptionRow => ({
   expireDate: String(row.expire_date),
   autoRenew: Number(row.auto_renew) === 1,
   note: row.note === null ? null : String(row.note),
+  subscriptionType: String(row.subscription_type) as SubscriptionRow['subscriptionType'],
+  quotaCycle: row.quota_cycle === null ? null : (String(row.quota_cycle) as SubscriptionRow['quotaCycle']),
+  quotaTotal: row.quota_total === null ? null : Number(row.quota_total),
+  quotaUsed: row.quota_used === null ? null : Number(row.quota_used),
+  quotaRemaining: row.quota_remaining === null ? null : Number(row.quota_remaining),
+  quotaUnit: row.quota_unit === null ? null : String(row.quota_unit),
   archived: Number(row.archived) === 1,
   deletedAt: row.deleted_at === null ? null : String(row.deleted_at),
   createdAt: String(row.created_at),
@@ -159,8 +165,9 @@ export class SqliteAdapter implements DbAdapter {
   async createSubscription(input: CreateSubscriptionInput): Promise<SubscriptionRow> {
     const stmt = this.conn().prepare(`
       INSERT INTO subscription
-        (name, category_id, price, billing_cycle, start_date, expire_date, auto_renew, note)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        (name, category_id, price, billing_cycle, start_date, expire_date, auto_renew, note,
+         subscription_type, quota_cycle, quota_total, quota_used, quota_remaining, quota_unit)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     const info = stmt.run(
       input.name,
@@ -171,6 +178,12 @@ export class SqliteAdapter implements DbAdapter {
       input.expireDate,
       input.autoRenew ? 1 : 0,
       input.note,
+      input.subscriptionType,
+      input.quotaCycle,
+      input.quotaTotal,
+      input.quotaUsed,
+      input.quotaRemaining,
+      input.quotaUnit,
     )
     const row = this.conn().prepare('SELECT * FROM subscription WHERE id = ?').get(info.lastInsertRowid) as SqliteRow
     return mapSubscription(row)
@@ -182,6 +195,7 @@ export class SqliteAdapter implements DbAdapter {
         UPDATE subscription SET
           name = ?, category_id = ?, price = ?, billing_cycle = ?,
           start_date = ?, expire_date = ?, auto_renew = ?, note = ?,
+          subscription_type = ?, quota_cycle = ?, quota_total = ?, quota_used = ?, quota_remaining = ?, quota_unit = ?,
           updated_at = datetime('now')
         WHERE id = ?
       `)
@@ -194,6 +208,12 @@ export class SqliteAdapter implements DbAdapter {
         input.expireDate,
         input.autoRenew ? 1 : 0,
         input.note,
+        input.subscriptionType,
+        input.quotaCycle,
+        input.quotaTotal,
+        input.quotaUsed,
+        input.quotaRemaining,
+        input.quotaUnit,
         id,
       )
     return this.getSubscriptionById(id)
