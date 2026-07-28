@@ -92,19 +92,19 @@ const emit = defineEmits<{
 }
 
 .sub-card.is-expired {
-  border-left: 4px solid var(--color-status-expired);
+  border-left: 0.25rem solid var(--color-status-expired);
 }
 
 .sub-card.is-soon7 {
-  border-left: 4px solid var(--color-status-soon7);
+  border-left: 0.25rem solid var(--color-status-soon7);
 }
 
 .sub-card.is-soon30 {
-  border-left: 4px solid var(--color-status-soon30);
+  border-left: 0.25rem solid var(--color-status-soon30);
 }
 
 .sub-card.is-sufficient {
-  border-left: 4px solid var(--color-status-sufficient);
+  border-left: 0.25rem solid var(--color-status-sufficient);
 }
 
 .sub-card-header {
@@ -144,7 +144,7 @@ const emit = defineEmits<{
 .info-item {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
 }
 
 .info-label {

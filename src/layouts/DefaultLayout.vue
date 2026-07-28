@@ -73,7 +73,7 @@ const navItems = [
 }
 
 .header-inner {
-  max-width: 1200px;
+  max-width: var(--layout-max-width);
   margin: 0 auto;
   padding: 0 var(--space-6);
   height: var(--size-nav-height);
@@ -96,8 +96,8 @@ const navItems = [
 }
 
 .logo-icon {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
   color: var(--color-primary);
 }
 
@@ -116,7 +116,7 @@ const navItems = [
   position: relative;
   display: inline-flex;
   align-items: center;
-  height: 36px;
+  height: 2.25rem;
   padding: 0 var(--space-4);
   border-radius: var(--radius-md);
   font-size: var(--font-size-base);
@@ -141,9 +141,9 @@ const navItems = [
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.3125rem;
   margin-left: var(--space-1);
   border-radius: var(--radius-full);
   background-color: var(--color-status-expired);
@@ -159,7 +159,7 @@ const navItems = [
 }
 
 .main-inner {
-  max-width: 1200px;
+  max-width: var(--layout-max-width);
   margin: 0 auto;
   padding: 0 var(--space-6);
 }
@@ -174,7 +174,7 @@ const navItems = [
   }
 
   .nav {
-    max-width: calc(100vw - 160px);
+    max-width: calc(100vw - 10rem);
     overflow-x: auto;
     scrollbar-width: none;
   }

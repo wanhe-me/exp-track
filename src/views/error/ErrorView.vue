@@ -59,13 +59,13 @@ const retry = (): void => {
   text-align: center;
   padding: var(--space-12) var(--space-10);
   border-radius: var(--radius-xl);
-  max-width: 480px;
+  max-width: 30rem;
   width: 100%;
 }
 
 .error-icon {
-  width: 48px;
-  height: 48px;
+  width: 3rem;
+  height: 3rem;
   color: var(--color-status-expired);
   margin-bottom: var(--space-4);
 }

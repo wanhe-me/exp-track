@@ -73,8 +73,8 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background-color: var(--color-bg-card);
@@ -98,15 +98,15 @@ onBeforeUnmount(() => {
 }
 
 .icon {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 .size-popover {
   position: absolute;
   top: calc(100% + var(--space-2));
   right: 0;
-  min-width: 160px;
+  min-width: 10rem;
   padding: var(--space-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);

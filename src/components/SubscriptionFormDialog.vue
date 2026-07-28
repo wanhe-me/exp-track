@@ -258,7 +258,7 @@ const billingOptions: { value: BillingCycle; label: string }[] = [
 
 .form-dialog {
   border-radius: var(--radius-lg);
-  width: 560px;
+  width: 35rem;
   max-width: calc(100vw - var(--space-8));
   max-height: calc(100vh - var(--space-8));
   display: flex;
@@ -282,12 +282,12 @@ const billingOptions: { value: BillingCycle; label: string }[] = [
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   background: var(--color-bg-hover);
-  font-size: 22px;
+  font-size: 1.375rem;
   line-height: 1;
   color: var(--color-text-tertiary);
   padding: 0;

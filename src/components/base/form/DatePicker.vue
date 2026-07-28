@@ -753,8 +753,8 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   border: none;
   border-radius: var(--radius-full);
   background: transparent;
@@ -796,7 +796,7 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
   z-index: 1100;
   top: 0;
   left: 0;
-  width: 300px;
+  width: 18.75rem;
   border-radius: var(--radius-lg);
   background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
@@ -818,8 +818,8 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   background: transparent;
@@ -850,7 +850,7 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
 .dp-week-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 0.125rem;
   margin-bottom: var(--space-1);
 }
 
@@ -858,7 +858,7 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 32px;
+  height: 2rem;
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   font-weight: 500;
@@ -869,13 +869,13 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
 .dp-grid {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
 }
 
 .dp-week-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 0.125rem;
 }
 
 /* 日期格 */
@@ -883,7 +883,7 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
+  height: 2.25rem;
   border: none;
   border-radius: var(--radius-md);
   background: transparent;
@@ -922,9 +922,9 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
 .dp-day--today::after {
   content: '';
   position: absolute;
-  bottom: 4px;
-  width: 4px;
-  height: 4px;
+  bottom: 0.25rem;
+  width: 0.25rem;
+  height: 0.25rem;
   border-radius: var(--radius-full);
   background-color: var(--color-primary);
 }
@@ -967,7 +967,7 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 30px;
+  height: 1.875rem;
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -1001,7 +1001,7 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
     left: 50%;
     transform: translate(-50%, -50%);
     width: calc(100vw - var(--space-8));
-    max-width: 340px;
+    max-width: 21.25rem;
   }
 }
 </style>

@@ -74,7 +74,7 @@ defineExpose({ open, close })
 .confirm-dialog {
   border-radius: var(--radius-lg);
   padding: var(--space-6);
-  width: 400px;
+  width: 25rem;
   max-width: calc(100vw - var(--space-8));
 }
 

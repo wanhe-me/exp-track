@@ -146,14 +146,14 @@ const confirmDelete = async (): Promise<void> => {
 .create-section {
   display: flex;
   gap: var(--space-3);
-  max-width: 480px;
+  max-width: 30rem;
 }
 
 .category-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  max-width: 640px;
+  max-width: 40rem;
 }
 
 .category-item {

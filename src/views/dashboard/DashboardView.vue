@@ -62,7 +62,7 @@ const onSearch = (): void => {
       title="暂无订阅"
       description="点击「添加订阅」开始管理你的到期提醒"
     >
-      <button class="btn btn-primary" style="margin-top: 16px" @click="actions.openCreate">
+      <button class="btn btn-primary" style="margin-top: 1rem" @click="actions.openCreate">
         添加订阅
       </button>
     </EmptyState>
@@ -127,13 +127,13 @@ const onSearch = (): void => {
 
 .search-input {
   flex: 1;
-  min-width: 200px;
-  max-width: 320px;
+  min-width: 12.5rem;
+  max-width: 20rem;
 }
 
 .filter-select {
   width: auto;
-  min-width: 160px;
+  min-width: 10rem;
 }
 
 @media (max-width: 768px) {

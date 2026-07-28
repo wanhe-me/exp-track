@@ -4,6 +4,7 @@ import * as echarts from 'echarts'
 import { storeToRefs } from 'pinia'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { useCategoryStore } from '@/stores/category'
+import { useSettingsStore } from '@/stores/settings'
 import { domainConfig } from '@/types'
 import type { SubscriptionStatus } from '@/types'
 import { formatDate, remainingDaysLabel } from '@/utils/date'
@@ -11,7 +12,9 @@ import EmptyState from '@/components/base/display/EmptyState.vue'
 
 const subscriptionStore = useSubscriptionStore()
 const categoryStore = useCategoryStore()
+const settingsStore = useSettingsStore()
 const { loading } = storeToRefs(subscriptionStore)
+const { uiScale } = storeToRefs(settingsStore)
 
 const chartRef = ref<HTMLDivElement | null>(null)
 let chart: echarts.ECharts | null = null
@@ -38,6 +41,8 @@ const buildOption = (): echarts.EChartsOption => {
   const textTertiary = getCssVar('--color-text-tertiary')
   const borderColor = getCssVar('--color-border-light')
   const bgPage = getCssVar('--color-bg-page')
+  // ECharts 画布内为 px 世界，不随 rem 缩放，需按档位系数手动换算
+  const scale = uiScale.value
 
   const data = subs.map((s) => ({
     value: [s.remainingDays, s.name],
@@ -49,7 +54,7 @@ const buildOption = (): echarts.EChartsOption => {
       text: `未来 ${range} 天到期分布`,
       left: 'center',
       textStyle: {
-        fontSize: 16,
+        fontSize: 16 * scale,
         fontWeight: 600,
         color: getCssVar('--color-text-primary'),
       },
@@ -77,12 +82,12 @@ const buildOption = (): echarts.EChartsOption => {
       type: 'value',
       name: '剩余天数',
       nameLocation: 'middle',
-      nameGap: 30,
+      nameGap: 30 * scale,
       min: 0,
       max: range,
       interval: Math.ceil(range / 9),
       axisLine: { lineStyle: { color: borderColor } },
-      axisLabel: { color: textSecondary },
+      axisLabel: { color: textSecondary, fontSize: 12 * scale },
       nameTextStyle: { color: textTertiary },
       splitLine: { lineStyle: { color: borderColor } },
     },
@@ -92,9 +97,9 @@ const buildOption = (): echarts.EChartsOption => {
       inverse: true,
       axisLine: { lineStyle: { color: borderColor } },
       axisLabel: {
-        width: 120,
+        width: 120 * scale,
         overflow: 'truncate',
-        fontSize: 12,
+        fontSize: 12 * scale,
         color: textSecondary,
       },
       splitLine: { lineStyle: { color: borderColor } },
@@ -102,7 +107,7 @@ const buildOption = (): echarts.EChartsOption => {
     series: [
       {
         type: 'scatter',
-        symbolSize: 16,
+        symbolSize: 16 * scale,
         data,
         emphasis: {
           itemStyle: { shadowBlur: 10, shadowColor: bgPage },
@@ -139,6 +144,14 @@ onUnmounted(() => {
 
 watch(timelineData, () => {
   nextTick(renderChart)
+})
+
+// 缩放档位变化：重建 option（字号/符号按系数换算）并重排画布
+watch(uiScale, () => {
+  nextTick(() => {
+    renderChart()
+    chart?.resize()
+  })
 })
 </script>
 
@@ -189,7 +202,7 @@ watch(timelineData, () => {
 
 .chart {
   width: 100%;
-  height: 480px;
+  height: 30rem;
 }
 
 .timeline-list {
@@ -228,8 +241,8 @@ watch(timelineData, () => {
 }
 
 .item-dot {
-  width: 8px;
-  height: 8px;
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: var(--radius-full);
   flex-shrink: 0;
 }
@@ -245,7 +258,7 @@ watch(timelineData, () => {
 
 .item-remaining {
   color: var(--color-text-tertiary);
-  min-width: 100px;
+  min-width: 6.25rem;
   text-align: right;
 }
 </style>

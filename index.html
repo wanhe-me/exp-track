@@ -32,7 +32,8 @@
         const SCALE_KEY = 'exp-track-ui-scale';
         const scaleRaw = localStorage.getItem(SCALE_KEY);
         const scaleNum = scaleRaw === null ? NaN : Number(scaleRaw);
-        if (scaleNum === 0.9 || scaleNum === 1.0 || scaleNum === 1.2 || scaleNum === 1.5) {
+        // 合法档位须与 src/stores/settings.ts 的 UI_SCALE_PRESETS 保持一致
+        if (scaleNum === 0.9 || scaleNum === 1.0 || scaleNum === 1.1 || scaleNum === 1.25) {
           document.documentElement.style.setProperty('--ui-scale', String(scaleNum));
         }
       })();

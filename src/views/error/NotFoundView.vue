@@ -50,19 +50,19 @@ const goBack = (): void => {
   text-align: center;
   padding: var(--space-12) var(--space-10);
   border-radius: var(--radius-xl);
-  max-width: 480px;
+  max-width: 30rem;
   width: 100%;
 }
 
 .error-icon {
-  width: 48px;
-  height: 48px;
+  width: 3rem;
+  height: 3rem;
   color: var(--color-status-expired);
   margin-bottom: var(--space-4);
 }
 
 .error-code {
-  font-size: 72px;
+  font-size: 4.5rem;
   font-weight: 800;
   line-height: 1;
   color: var(--color-text-primary);
@@ -93,7 +93,7 @@ const goBack = (): void => {
   }
 
   .error-code {
-    font-size: 56px;
+    font-size: 3.5rem;
   }
 
   .error-actions {
