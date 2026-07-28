@@ -42,7 +42,7 @@ export const config = {
   env: process.env.NODE_ENV ?? 'development',
   host: process.env.HOST ?? '127.0.0.1',
   port: intEnv('PORT', 15180),
-  corsOrigin: process.env.CORS_ORIGIN ?? 'http://127.0.0.1:15173',
+  corsOrigin: process.env.CORS_ORIGIN?.split(',').map(s => s.trim()) ?? ['http://127.0.0.1:15173'],
   dbDriver,
   sqlite: {
     path: process.env.SQLITE_PATH ?? './data/exp-track.db',
