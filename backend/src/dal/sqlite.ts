@@ -2,7 +2,7 @@ import Database from 'better-sqlite3'
 import { config } from '../config/index.js'
 import { logger } from '../utils/logger.js'
 import type { DbAdapter } from './types.js'
-import { manifest } from './migrations/manifest.js'
+import { manifestSqlite as manifest } from './migrations/manifest.js'
 import { runSqliteMigrations } from './migrator/sqlite.js'
 import type {
   CategoryRow,

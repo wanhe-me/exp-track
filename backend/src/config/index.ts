@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import './timezone.js'
 
 const required = (name: string, fallback?: string): string => {
@@ -17,8 +18,6 @@ const intEnv = (name: string, fallback: number): number => {
   }
   return parsed
 }
-
-
 
 export type DbDriver = 'sqlite' | 'mysql'
 

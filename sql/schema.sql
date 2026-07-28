@@ -11,7 +11,7 @@
 --   - 本文件【不参与执行】，仅作设计文档与可信源。
 --   - 实际建表 / 改表由迁移脚本完成：
 --       * SQLite 迁移脚本：backend/src/dal/migrations/sqlite/00X_xxx.sql
---       * MySQL  迁移脚本：backend/src/dal/migrations/mysql/00X_xxx.sql（待落地）
+--       * MySQL  迁移脚本：backend/src/dal/migrations/mysql/00X_xxx.sql
 --     迁移脚本由 migrator 按 manifest 顺序执行，启动时校验已应用迁移的 sha256
 --     checksum，改动已应用迁移会拒绝启动。
 --

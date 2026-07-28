@@ -1,8 +1,13 @@
-// 迁移清单：显式列出 SQLite 下的迁移文件，方便审计与回溯。
-// 新增迁移时按版本号递增追加，并在 sqlite/ 下新增同名 .sql 文件。
+// 迁移清单：双方言分文件维护。
+//   - SQLite 方言：migrationsRoot/sqlite/{file}.sql，注册到 manifestSqlite
+//   - MySQL  方言：migrationsRoot/mysql/{file}.sql， 注册到 manifestMysql
 //
-// 仅 SQLite 方言有迁移脚本。MySQL DAL 适配器尚未实现，待落地时再新建
-// migrations/mysql/ 目录与对应的执行器，当前不预留空壳。
+// 新增迁移时按版本号递增追加，并在对应方言目录下新增同名 .sql 文件，
+// 同时把 load('xxx') 加到对应 manifest；禁止改已应用的迁移文件
+// （启动时校验 checksum，改动会被拒绝）。
+//
+// 字段变更维护流程（参考 ../schema.sql 注释）：先改 sql/schema.sql 唯一可信源，
+// 再分别写 SQLite / MySQL 两份迁移。
 
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
@@ -17,13 +22,13 @@ export interface MigrationEntry {
 }
 
 const here = dirname(fileURLToPath(import.meta.url))
-// manifest.ts 与 sqlite/ 子目录同级，sql 文件位于 here/sqlite/{file}.sql
+// manifest.ts 与 sqlite/ 与 mysql/ 子目录同级
 const migrationsRoot = here
 
 const sha256 = (sql: string): string =>
   createHash('sha256').update(sql, 'utf8').digest('hex')
 
-const load = (file: string): MigrationEntry => {
+const loadSqlite = (file: string): MigrationEntry => {
   const filename = `${file}.sql`
   const path = join(migrationsRoot, 'sqlite', filename)
   const sql = readFileSync(path, 'utf8')
@@ -35,4 +40,20 @@ const load = (file: string): MigrationEntry => {
   }
 }
 
-export const manifest: MigrationEntry[] = [load('001_init')]
+const loadMysql = (file: string): MigrationEntry => {
+  const filename = `${file}.sql`
+  const path = join(migrationsRoot, 'mysql', filename)
+  const sql = readFileSync(path, 'utf8')
+  return {
+    version: file,
+    filename,
+    sql,
+    checksum: sha256(sql),
+  }
+}
+
+// 仅 SQLite 方言迁移文件
+export const manifestSqlite: MigrationEntry[] = [loadSqlite('001_init')]
+
+// 仅 MySQL 方言迁移文件
+export const manifestMysql: MigrationEntry[] = [loadMysql('001_init')]

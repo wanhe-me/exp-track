@@ -10,8 +10,8 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 
 > **当前实现状态**：MVP 第一阶段功能（FR-01~FR-10）已全部实现并跑通。
 > - **快速部署（SQLite）**已完整可用，为默认部署模式，零外部依赖、开箱即用。
-> - **稳定部署（MySQL）**：DAL 抽象接口已定义（`DbAdapter`），但 MySQL 适配器实现尚未完成（含迁移脚本，待落地时新建 `migrations/mysql/`）。需要时按 `dal/sqlite.ts` 的模式实现 `dal/mysql.ts` 并在 `dal/index.ts` 注册。
-> - 数据模型（`subscription` / `category` 两表）按 PRD 4.1/4.2 实现，由自建迁移系统（`backend/src/dal/migrator/`）按版本号顺序自动建表与升级；已有数据库通过 baseline 检测安全迁移。
+> - **稳定部署（MySQL）**已完整可用：`docker compose up -d` 拉起 MySQL 8.0 + phpMyAdmin，`backend/.env` 设 `DB_TYPE=mysql` 即可。`dal/mysql.ts` 与 `migrator/mysql.ts` 实现完整，含 baseline 检测 + checksum 校验 + 事务。
+> - 数据模型（`subscription` / `category` 两表）按 PRD 4.1/4.2 实现，由自建迁移系统（`backend/src/dal/migrator/`）按版本号顺序自动建表与升级；已有数据库通过 baseline 检测安全迁移。双方言迁移脚本分目录维护（`migrations/sqlite/` 与 `migrations/mysql/`），各自在 `manifest.ts` 的 `manifestSqlite` / `manifestMysql` 注册。**当前以 MySQL 为开发主线**：新增迁移先写 MySQL 一份；SQLite 侧待 MySQL 版本开发完毕后单独建 PR 同步重建，避免双模式并行干扰功能测试。
 
 ## 常用命令
 
@@ -34,7 +34,7 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 
 ### 数据库
 - **快速部署（默认，SQLite）**：无需任何容器或外部数据库服务。`DB_TYPE=sqlite`（默认），数据库文件存于 `backend/data/exp-track.db`（首次启动自动创建目录与建表）。
-- **稳定部署（MySQL，Docker）**：`cp .env.example .env` 配置 MySQL/phpMyAdmin 端口与账号 → `docker compose up -d` 启动 MySQL 8.0 + phpMyAdmin → `backend/.env` 设 `DB_TYPE=mysql`。**注**：MySQL DAL 适配器尚未实现，此模式暂不可用。
+- **稳定部署（MySQL，Docker）**：根目录 `cp .env.example .env` → `docker compose up -d` 拉起 MySQL 8.0 + phpMyAdmin → `backend/` 下 `cp .env.example .env` 并设 `DB_TYPE=mysql`，其余 `MYSQL_*` 默认值已对齐 docker-compose。mysql2 驱动 + 迁移系统自动建表，phpMyAdmin 入口 `http://127.0.0.1:18080`。
 
 > 本项目**未配置测试框架**（无 vitest/jest），暂无测试/单测命令。
 
@@ -53,7 +53,7 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 |------|------|
 | 新增 / 修改后端接口或业务域 | `backend/src/services/<domain>/`、`http/router.ts`、`utils/response.ts`；参考 `health/` `category/` `subscription/` 中任一已有域 |
 | 操作数据库 / 加表 | `backend/src/dal/`、`types/domain.ts`（业务代码统一经 `getDb()`，勿直接 import 具体数据库驱动） |
-| 加字段 / 改表结构 | 走自建迁移系统：在 `backend/src/dal/migrations/sqlite/` 下按版本号新增 `00X_xxx.sql` 并在 `migrations/manifest.ts` 注册，**禁止改 001_init.sql**（启动时校验 checksum，改动已应用迁移会拒绝启动）；同步更新根目录 `sql/schema.sql`（数据库表结构唯一可信源，MySQL 8.0 标准，供人工查阅；字段变更先改此文件再写迁移脚本）。`migrator/sqlite.ts` 跑迁移 + baseline 检测 |
+| 加字段 / 改表结构 | 走自建迁移系统：**先只写 MySQL 一份** `migrations/mysql/00X_xxx.sql` 并在 `manifest.ts` 的 `manifestMysql` 注册；SQLite 侧（`migrations/sqlite/` + `manifestSqlite`）待 MySQL 版本开发完毕后单独建 PR 同步重建（期间 SQLite 部署模式暂不可用，避免双模式并行干扰功能测试）。**禁止改 001_init.sql**（启动时校验 checksum，改动已应用迁移会拒绝启动）；同步更新根目录 `sql/schema.sql`（数据库表结构唯一可信源，MySQL 8.0 标准，供人工查阅；字段变更先改此文件再写迁移脚本）。`migrator/sqlite.ts` 与 `migrator/mysql.ts` 各自跑迁移 + baseline 检测 |
 | 改后端领域类型 | `backend/src/types/domain.ts`（勿从 `config` 或 `dal` 取领域类型） |
 | 改后端配置项 | `backend/src/config/index.ts`（所有配置经 `config` 对象，勿直接读 `process.env`） |
 | 新增 / 修改前端页面 | `src/views/`、`src/router/index.ts`、`src/stores/`、`src/api/` |
@@ -99,5 +99,4 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 - **分类（FR-10）**：名称 ≤50 唯一；**禁止删除被引用分类**。
 - **货币**：本阶段统一人民币 `¥`，多币种列入第二阶段。
 
-## 待办（PRD 目标尚未完成）
-- **MySQL DAL 适配器**：PRD 验收要求快速部署（SQLite）与稳定部署（MySQL）均可运行。当前仅 SQLite 适配器 + SQLite 迁移脚本实现完毕；需按 `dal/sqlite.ts` 模式实现 `dal/mysql.ts`、新建 `migrations/mysql/` 迁移脚本与对应执行器，并在 `dal/index.ts` 的 `getDb()` 中注册 `mysql` 分支。
+> PRD 8 章验收清单全部勾选（SQLite + MySQL 双部署模式均已端到端可用）。
