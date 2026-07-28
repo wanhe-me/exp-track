@@ -26,6 +26,7 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 - `pnpm type-check`：仅运行 `vue-tsc --build` 类型检查。
 - `pnpm lint`：依次运行 oxlint（`--fix`）与 eslint（`--fix`）。
 - `pnpm preview`：预览生产构建产物。
+- `pnpm migrate` / `pnpm migrate:status` / `pnpm migrate:up`：迁移 CLI 转发到 `backend/`，驱动由 `backend/.env` 的 `DB_TYPE` 决定（`sqlite` / `mysql`）。`status` 列已应用 / 待执行；`up` 应用所有待执行迁移（已含 baseline 检测与 checksum 校验）。
 
 
 ### 后端（`backend/`）
