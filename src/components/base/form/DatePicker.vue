@@ -18,7 +18,7 @@
  */
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import dayjs from 'dayjs'
 import { domainConfig } from '@/types'
 import type { DisabledDateRange, DatePickerSize } from './types'
@@ -116,6 +116,7 @@ const currentMonth = ref(dayjs().month()) // 0-11
 const panelRef = ref<HTMLDivElement | null>(null)
 const inputRef = ref<HTMLInputElement | null>(null)
 const blurTimeoutRef = ref<ReturnType<typeof setTimeout> | null>(null)
+const panelStyle = ref<Record<string, string>>({})
 
 // ==================== 计算属性 ====================
 
@@ -309,12 +310,45 @@ function handleClear(event: MouseEvent): void {
   emit('change', '')
 }
 
+/** 根据输入框位置计算面板定位 */
+function updatePanelPosition(): void {
+  if (!inputRef.value) return
+  const rect = inputRef.value.getBoundingClientRect()
+  const panelWidth = 300 // 18.75rem
+  const panelEstHeight = 340 // 估算面板高度
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+
+  let top = rect.bottom + 4
+  let left = rect.left
+
+  // 下方空间不够时，向上弹出
+  if (top + panelEstHeight > viewportHeight) {
+    top = rect.top - panelEstHeight - 4
+  }
+  // 右侧溢出时向左偏移
+  if (left + panelWidth > viewportWidth) {
+    left = viewportWidth - panelWidth - 8
+  }
+  // 左侧溢出修正
+  if (left < 0) {
+    left = 8
+  }
+
+  panelStyle.value = {
+    position: 'fixed',
+    top: `${top}px`,
+    left: `${left}px`,
+  }
+}
+
 /** 展开/收起日历面板 */
 function togglePanel(): void {
   if (props.disabled || props.readonly) return
   isOpen.value = !isOpen.value
   if (isOpen.value) {
     syncMonthToSelected()
+    nextTick(() => updatePanelPosition())
   }
 }
 
@@ -424,10 +458,14 @@ function handleClickOutside(event: MouseEvent): void {
 
 onMounted(() => {
   document.addEventListener('mousedown', handleClickOutside)
+  window.addEventListener('scroll', updatePanelPosition, true)
+  window.addEventListener('resize', updatePanelPosition)
 })
 
 onUnmounted(() => {
   document.removeEventListener('mousedown', handleClickOutside)
+  window.removeEventListener('scroll', updatePanelPosition, true)
+  window.removeEventListener('resize', updatePanelPosition)
   if (blurTimeoutRef.value) {
     clearTimeout(blurTimeoutRef.value)
     blurTimeoutRef.value = null
@@ -542,6 +580,7 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
         v-if="isOpen"
         ref="panelRef"
         class="dp-panel"
+        :style="panelStyle"
         role="dialog"
         :aria-label="`日期选择 - ${monthYearLabel}`"
         @keydown="onPanelKeydown"
@@ -791,11 +830,9 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
 }
 
 /* ==================== 日历面板 ==================== */
+/* 面板定位通过 inline style 动态计算 */
 .dp-panel {
-  position: absolute;
   z-index: 1100;
-  top: 0;
-  left: 0;
   width: 18.75rem;
   border-radius: var(--radius-lg);
   background-color: var(--color-bg-elevated);
@@ -996,9 +1033,8 @@ const uid = `dp-${Math.random().toString(36).slice(2, 9)}`
 /* ==================== 响应式 ==================== */
 @media (max-width: 768px) {
   .dp-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
+    top: 50% !important;
+    left: 50% !important;
     transform: translate(-50%, -50%);
     width: calc(100vw - var(--space-8));
     max-width: 21.25rem;

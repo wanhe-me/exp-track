@@ -1,19 +1,9 @@
 <script setup lang="ts">
 import { RouterLink, RouterView, useRoute } from 'vue-router'
-import { computed } from 'vue'
-import { useSubscriptionStore } from '@/stores/subscription'
 import ThemeToggle from '@/components/base/controls/ThemeToggle.vue'
 import SizeControl from '@/components/base/controls/SizeControl.vue'
 
-const subscriptionStore = useSubscriptionStore()
 const route = useRoute()
-
-// 临期/已过期数量徽标
-const alertCount = computed(() => {
-  return subscriptionStore.subscriptions.filter(
-    (s) => s.status === 'expired' || s.status === 'soon7',
-  ).length
-})
 
 const navItems = [
   { to: '/dashboard', label: '看板', exact: true },
@@ -49,7 +39,6 @@ const isLinkActive = (item: { to: string; exact?: boolean }): boolean => {
               :class="{ 'nav-link-active': isLinkActive(item) }"
             >
               {{ item.label }}
-              <span v-if="item.to === '/dashboard' && alertCount > 0" class="nav-badge">{{ alertCount }}</span>
             </RouterLink>
           </nav>
           <ThemeToggle />
@@ -145,21 +134,6 @@ const isLinkActive = (item: { to: string; exact?: boolean }): boolean => {
   font-weight: 500;
 }
 
-.nav-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.125rem;
-  height: 1.125rem;
-  padding: 0 0.3125rem;
-  margin-left: var(--space-1);
-  border-radius: var(--radius-full);
-  background-color: var(--color-status-expired);
-  color: #fff;
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  line-height: 1;
-}
 
 .layout-main {
   flex: 1;

@@ -26,10 +26,18 @@ const parsePage = (raw: unknown): number =>
 const parsePageSize = (raw: unknown): number =>
   z.coerce.number().int().min(1).max(100).default(20).parse(raw)
 
+const parseSortBy = (raw: unknown): 'expireDate' | 'createdAt' =>
+  z.enum(['expireDate', 'createdAt']).default('expireDate').parse(raw)
+
+const parseSortOrder = (raw: unknown): 'asc' | 'desc' =>
+  z.enum(['asc', 'desc']).default('asc').parse(raw)
+
 subscriptionRouter.get('/', asyncHandler(async (req, res) => {
   const view = parseView(req.query.view)
   const page = parsePage(req.query.page)
   const pageSize = parsePageSize(req.query.pageSize)
+  const sortBy = parseSortBy(req.query.sortBy)
+  const sortOrder = parseSortOrder(req.query.sortOrder)
   const categoryIdRaw = req.query.categoryId
   const categoryId =
     categoryIdRaw !== undefined && categoryIdRaw !== ''
@@ -40,7 +48,7 @@ subscriptionRouter.get('/', asyncHandler(async (req, res) => {
       ? req.query.search.trim()
       : undefined
 
-  const data = await listSubscriptions(view, page, pageSize, categoryId, search)
+  const data = await listSubscriptions(view, page, pageSize, categoryId, search, sortBy, sortOrder)
   return ok(res, data)
 }))
 

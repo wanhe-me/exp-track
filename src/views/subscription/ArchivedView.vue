@@ -1,20 +1,44 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCategoryStore } from '@/stores/category'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
 import SubscriptionCard from '@/components/SubscriptionCard.vue'
+import SubscriptionDetailDialog from '@/components/SubscriptionDetailDialog.vue'
 import SubscriptionFormDialog from '@/components/SubscriptionFormDialog.vue'
 import ConfirmDialog from '@/components/base/dialog/ConfirmDialog.vue'
 import EmptyState from '@/components/base/display/EmptyState.vue'
-import type { SubscriptionInput } from '@/types'
+import type { Subscription, SubscriptionInput } from '@/types'
 
 const categoryStore = useCategoryStore()
 const subscriptionStore = useSubscriptionStore()
 const { subscriptions, loading } = storeToRefs(subscriptionStore)
 
 const actions = useSubscriptionActions('archived')
+
+const detailVisible = ref(false)
+const detailTarget = ref<Subscription | null>(null)
+
+const openDetail = (sub: Subscription): void => {
+  detailTarget.value = sub
+  detailVisible.value = true
+}
+
+const onDetailEdit = (sub: Subscription): void => {
+  detailVisible.value = false
+  actions.openEdit(sub)
+}
+
+const onDetailDelete = (sub: Subscription): void => {
+  detailVisible.value = false
+  actions.requestDelete(sub)
+}
+
+const onDetailUnarchive = (sub: Subscription): void => {
+  detailVisible.value = false
+  actions.handleUnarchive(sub)
+}
 
 onMounted(async () => {
   await Promise.all([categoryStore.fetchAll(), subscriptionStore.setView('archived')])
@@ -45,12 +69,18 @@ const onSubmit = async (input: SubscriptionInput, id: number | null): Promise<vo
         v-for="sub in subscriptions"
         :key="sub.id"
         :subscription="sub"
-        view="archived"
-        @edit="actions.openEdit"
-        @delete="actions.requestDelete"
-        @unarchive="actions.handleUnarchive"
+        @detail="openDetail"
       />
     </div>
+
+    <SubscriptionDetailDialog
+      v-model="detailVisible"
+      :subscription="detailTarget"
+      view="archived"
+      @edit="onDetailEdit"
+      @delete="onDetailDelete"
+      @unarchive="onDetailUnarchive"
+    />
 
     <SubscriptionFormDialog
       v-model="actions.formVisible.value"
@@ -59,7 +89,7 @@ const onSubmit = async (input: SubscriptionInput, id: number | null): Promise<vo
     />
 
     <ConfirmDialog
-      ref="actions.deleteDialog"
+      v-model="actions.deleteDialogVisible.value"
       title="删除订阅"
       :message="`确定要删除订阅「${actions.deleteTarget.value?.name}」吗？删除后可在回收站恢复。`"
       confirm-text="删除"

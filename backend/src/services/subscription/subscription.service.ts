@@ -209,6 +209,8 @@ export const listSubscriptions = async (
   pageSize: number,
   categoryId?: number,
   search?: string,
+  sortBy: 'expireDate' | 'createdAt' = 'expireDate',
+  sortOrder: 'asc' | 'desc' = 'asc',
 ): Promise<PaginatedResult<SubscriptionDto>> => {
   const filter: SubscriptionFilter = { view, page, pageSize }
   if (categoryId !== undefined) filter.categoryId = categoryId
@@ -219,9 +221,17 @@ export const listSubscriptions = async (
     getDb().countSubscriptions(filter),
   ])
 
-  const items = rows
-    .map(buildDto)
-    .sort((a, b) => a.remainingDays - b.remainingDays)
+  const items = rows.map(buildDto)
+
+  items.sort((a, b) => {
+    let cmp: number
+    if (sortBy === 'expireDate') {
+      cmp = a.remainingDays - b.remainingDays
+    } else {
+      cmp = a.createdAt.localeCompare(b.createdAt)
+    }
+    return sortOrder === 'asc' ? cmp : -cmp
+  })
 
   return { items, total, page, pageSize }
 }

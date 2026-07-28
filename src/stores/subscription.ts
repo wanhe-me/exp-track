@@ -11,6 +11,8 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   const currentView = ref<SubscriptionView>('active')
   const filterCategoryId = ref<number | undefined>(undefined)
   const searchKeyword = ref('')
+  const sortBy = ref<'expireDate' | 'createdAt'>('expireDate')
+  const sortOrder = ref<'asc' | 'desc'>('asc')
 
   const fetchAll = async (): Promise<void> => {
     loading.value = true
@@ -19,6 +21,8 @@ export const useSubscriptionStore = defineStore('subscription', () => {
         view: currentView.value,
         categoryId: filterCategoryId.value,
         search: searchKeyword.value.trim() || undefined,
+        sortBy: sortBy.value,
+        sortOrder: sortOrder.value,
       })
       subscriptions.value = result.items
       total.value = result.total
@@ -80,6 +84,8 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     currentView,
     filterCategoryId,
     searchKeyword,
+    sortBy,
+    sortOrder,
     fetchAll,
     setView,
     create,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps<{
   title?: string
@@ -7,14 +7,19 @@ const props = defineProps<{
   confirmText?: string
   cancelText?: string
   danger?: boolean
+  modelValue?: boolean
 }>()
 
 const emit = defineEmits<{
+  'update:modelValue': [value: boolean]
   confirm: []
   cancel: []
 }>()
 
-const visible = ref(false)
+const visible = computed({
+  get: () => props.modelValue ?? false,
+  set: (val: boolean) => emit('update:modelValue', val),
+})
 
 const open = (): void => {
   visible.value = true

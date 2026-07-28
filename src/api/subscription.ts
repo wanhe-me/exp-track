@@ -6,6 +6,8 @@ export const subscriptionApi = {
     view?: SubscriptionView
     categoryId?: number
     search?: string
+    sortBy?: 'expireDate' | 'createdAt'
+    sortOrder?: 'asc' | 'desc'
     page?: number
     pageSize?: number
   }): Promise<PaginatedResult<Subscription>> => {
