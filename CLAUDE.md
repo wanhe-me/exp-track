@@ -53,7 +53,7 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 |------|------|
 | 新增 / 修改后端接口或业务域 | `backend/src/services/<domain>/`、`http/router.ts`、`utils/response.ts`；参考 `health/` `category/` `subscription/` 中任一已有域 |
 | 操作数据库 / 加表 | `backend/src/dal/`、`types/domain.ts`（业务代码统一经 `getDb()`，勿直接 import 具体数据库驱动） |
-| 加字段 / 改表结构 | 走自建迁移系统：在 `backend/src/dal/migrations/sqlite/` 下按版本号新增 `00X_xxx.sql` 并在 `migrations/manifest.ts` 注册，**禁止改 001_init.sql**（启动时校验 checksum，改动已应用迁移会拒绝启动）；同步更新 `migrations/schema.sql` 字段设计文档（供人工查阅）。`migrator/sqlite.ts` 跑迁移 + baseline 检测 |
+| 加字段 / 改表结构 | 走自建迁移系统：在 `backend/src/dal/migrations/sqlite/` 下按版本号新增 `00X_xxx.sql` 并在 `migrations/manifest.ts` 注册，**禁止改 001_init.sql**（启动时校验 checksum，改动已应用迁移会拒绝启动）；同步更新根目录 `sql/schema.sql`（数据库表结构唯一可信源，MySQL 8.0 标准，供人工查阅；字段变更先改此文件再写迁移脚本）。`migrator/sqlite.ts` 跑迁移 + baseline 检测 |
 | 改后端领域类型 | `backend/src/types/domain.ts`（勿从 `config` 或 `dal` 取领域类型） |
 | 改后端配置项 | `backend/src/config/index.ts`（所有配置经 `config` 对象，勿直接读 `process.env`） |
 | 新增 / 修改前端页面 | `src/views/`、`src/router/index.ts`、`src/stores/`、`src/api/` |

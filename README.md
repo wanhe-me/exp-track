@@ -109,7 +109,7 @@ pnpm dev:all
 | `pnpm migrate:status` | 查看已应用 / 待执行迁移（含 baseline 候选提示） |
 | `pnpm migrate:up` | 应用所有待执行迁移（首次启动会自动执行） |
 
-> **数据库迁移说明**：当前版本使用自建轻量迁移系统（仅 SQLite）。迁移脚本位于 `backend/src/dal/migrations/sqlite/`；数据表字段设计文档见 `backend/src/dal/migrations/schema.sql`（供人工随时查阅表结构，不参与执行）。migrator 启动时校验已应用迁移的 sha256 checksum，改动已应用迁移文件会拒绝启动。已有 SQLite 数据会在首次启动时自动识别为 `001_init` 基线，不破坏现有数据。新增字段按版本号顺序追加 `00X_xxx.sql` 并在 `manifest.ts` 注册，并同步更新 `schema.sql`。MySQL 迁移脚本待 DAL 适配器落地时一并新建。
+> **数据库迁移说明**：当前版本使用自建轻量迁移系统（仅 SQLite）。迁移脚本位于 `backend/src/dal/migrations/sqlite/`；数据表字段设计文档见 `sql/schema.sql`（项目根目录，MySQL 8.0 标准，唯一可信源，供人工随时查阅表结构，不参与执行）。migrator 启动时校验已应用迁移的 sha256 checksum，改动已应用迁移文件会拒绝启动。已有 SQLite 数据会在首次启动时自动识别为 `001_init` 基线，不破坏现有数据。新增字段按版本号顺序追加 `00X_xxx.sql` 并在 `manifest.ts` 注册，并同步更新 `schema.sql`。MySQL 迁移脚本待 DAL 适配器落地时一并新建。
 
 ## 配置项
 
@@ -137,7 +137,7 @@ exp-track/
 │       ├── bootstrap/              # 应用入口与优雅关闭
 │       ├── config/                 # 配置加载（DB_TYPE、领域配置）
 │       ├── dal/                    # 数据访问层（DbAdapter 接口 + SQLite 实现）
-│       │   ├── migrations/         # schema.sql 字段设计文档 + sqlite/ 迁移脚本 + manifest.ts
+│       │   ├── migrations/         # sqlite/ 迁移脚本 + manifest.ts（迁移清单）
 │       │   └── migrator/           # 自建迁移执行器（baseline 检测 + checksum 校验 + 事务）
 │       ├── http/                   # 路由挂载
 │       ├── middlewares/            # 请求日志、错误处理
@@ -156,6 +156,7 @@ exp-track/
 │   ├── utils/                      # 日期、状态工具
 │   └── views/                      # 页面视图
 ├── docs/PRD/                       # 产品需求文档
+├── sql/                            # schema.sql 数据库表结构设计文档（唯一可信源，MySQL 8.0 标准，不参与执行）
 └── docker-compose.yml              # MySQL + phpMyAdmin 编排
 ```
 
