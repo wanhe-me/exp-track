@@ -1,3 +1,8 @@
 allowBuilds:
   better-sqlite3: set this to true or false
   esbuild: set this to true or false
+# 允许 pnpm 构建以下需要原生编译的依赖
+# pnpm v10+ 用 onlyBuiltDependencies（白名单数组）；旧字段 allowBuilds 已不被识别
+onlyBuiltDependencies:
+  - better-sqlite3
+  - esbuild

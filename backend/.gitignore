@@ -5,5 +5,6 @@ dist
 *.log
 *.tsbuildinfo
 
-# SQLite data
+# SQLite data (file + WAL/SHM sidecars)
 data/
+**/*.db-*

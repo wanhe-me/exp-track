@@ -2,6 +2,8 @@ import Database from 'better-sqlite3'
 import { config } from '../config/index.js'
 import { logger } from '../utils/logger.js'
 import type { DbAdapter } from './types.js'
+import { manifest } from './migrations/manifest.js'
+import { runSqliteMigrations } from './migrator/sqlite.js'
 import type {
   CategoryRow,
   CreateCategoryInput,
@@ -37,41 +39,6 @@ const mapSubscription = (row: SqliteRow): SubscriptionRow => ({
   updatedAt: String(row.updated_at),
 })
 
-const INIT_SQL = `
-CREATE TABLE IF NOT EXISTS category (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS subscription (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  category_id INTEGER NOT NULL,
-  price REAL NOT NULL,
-  billing_cycle TEXT NOT NULL,
-  start_date TEXT NOT NULL,
-  expire_date TEXT NOT NULL,
-  auto_renew INTEGER NOT NULL DEFAULT 0,
-  note TEXT,
-  archived INTEGER NOT NULL DEFAULT 0,
-  deleted_at TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-  FOREIGN KEY (category_id) REFERENCES category(id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_subscription_expire_date
-  ON subscription(expire_date);
-CREATE INDEX IF NOT EXISTS idx_subscription_category_id
-  ON subscription(category_id);
-CREATE INDEX IF NOT EXISTS idx_subscription_archived
-  ON subscription(archived);
-CREATE INDEX IF NOT EXISTS idx_subscription_deleted_at
-  ON subscription(deleted_at);
-`
-
 export class SqliteAdapter implements DbAdapter {
   private db: Database.Database | null = null
 
@@ -92,8 +59,12 @@ export class SqliteAdapter implements DbAdapter {
     this.db = new Database(path)
     this.db.pragma('journal_mode = WAL')
     this.db.pragma('foreign_keys = ON')
-    this.db.exec(INIT_SQL)
-    logger.info('sqlite initialized', { path })
+    const result = runSqliteMigrations(this.db, manifest)
+    logger.info('sqlite initialized', {
+      path,
+      migrationsApplied: result.applied,
+      baselineApplied: result.baselineApplied,
+    })
   }
 
   async close(): Promise<void> {

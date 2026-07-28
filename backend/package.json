@@ -6,10 +6,13 @@
   "description": "会员订阅追踪 - 后端服务",
   "scripts": {
     "dev": "nodemon --watch src -e ts,json --exec \"tsx src/bootstrap/server.ts\"",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && tsx scripts/copy-migrations.ts",
     "start": "node dist/bootstrap/server.js",
     "type-check": "tsc --noEmit",
-    "lint": "pnpm --dir .. lint"
+    "lint": "pnpm --dir .. lint",
+    "migrate": "tsx scripts/migrate.ts",
+    "migrate:status": "tsx scripts/migrate.ts status",
+    "migrate:up": "tsx scripts/migrate.ts up"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.1",
