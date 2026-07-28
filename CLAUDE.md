@@ -18,12 +18,15 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 包管理器使用 **pnpm**，根目录与 `backend/` 各有独立 `pnpm-lock.yaml`，需分别 `pnpm install`。
 
 ### 前端（根目录）
-- `pnpm dev`：启动 Vite dev server（127.0.0.1:15173），含 HMR。
-- `pnpm build`：先 `vue-tsc` 类型检查再 `vite build` 生产构建。
+- `pnpm dev`：用 concurrently 同时拉起前后端。
+- `pnpm dev:front`：启动前端 Vite dev server（127.0.0.1:15173），含 HMR。
+- `pnpm dev:back`：启动后端 API（127.0.0.1:15180），nodemon + tsx 热重载。
+- `pnpm build`：完整打包前后端——依次 `vue-tsc` 类型检查 → `build:front`（vite build，自动加载 `.env.production`：同源部署 `VITE_API_BASE_URL=/`）→ `build:back`（backend tsc）→ `build:release`（`scripts/build-release.mjs` 组装部署产物到 `release/`，含 `release/frontend/` 静态文件、`release/backend/` 最小运行集（dist + 裁剪版 package.json + pnpm-lock.yaml + pnpm-workspace.yaml + .env.example）与 `release/nginx.conf.example`（同源部署示例：静态托管 + `/api` 反代到 127.0.0.1:15180，源文件在 `deploy/`）；服务器上 `cd backend && pnpm install --prod && pnpm start`）。
+- `pnpm build:front` / `pnpm build:back` / `pnpm build:release`：单独执行对应打包步骤。
 - `pnpm type-check`：仅运行 `vue-tsc --build` 类型检查。
 - `pnpm lint`：依次运行 oxlint（`--fix`）与 eslint（`--fix`）。
 - `pnpm preview`：预览生产构建产物。
-- `pnpm dev:all`：用 concurrently 同时拉起前后端。
+
 
 ### 后端（`backend/`）
 - `pnpm dev`：nodemon + tsx 热重载监听 `src`，启动入口 `src/bootstrap/server.ts`（127.0.0.1:15180）。

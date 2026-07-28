@@ -46,6 +46,9 @@ backend/.env
 backend/.env.local
 backend/*.log
 
+# 部署产物（scripts/build-release.mjs 输出）
+release/
+
 # Docker
 .env
 mysql_data/
