@@ -4,6 +4,7 @@ import { useCategoryStore } from '@/stores/category'
 import type { BillingCycle, Subscription, SubscriptionInput } from '@/types'
 import { BILLING_CYCLE_LABELS, domainConfig } from '@/types'
 import { todayStr } from '@/utils/date'
+import { DatePicker } from '@/components/base'
 
 const props = defineProps<{
   modelValue: boolean
@@ -214,16 +215,11 @@ const billingOptions: { value: BillingCycle; label: string }[] = [
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">开始日期 <span class="required">*</span></label>
-              <input v-model="form.startDate" class="input" type="date" />
-              <p v-if="errors.startDate" class="form-error">{{ errors.startDate }}</p>
+              <DatePicker v-model="form.startDate" label="开始日期" required :error="errors.startDate" />
             </div>
 
             <div class="form-group">
-              <label class="form-label">到期日期 <span class="required">*</span></label>
-              <input v-model="form.expireDate" class="input" type="date" />
-              <p v-if="errors.expireDate" class="form-error">{{ errors.expireDate }}</p>
-              <p class="form-hint">到期日期为剩余天数唯一权威字段</p>
+              <DatePicker v-model="form.expireDate" label="到期日期" required :error="errors.expireDate" hint="到期日期为剩余天数唯一权威字段" />
             </div>
           </div>
 

@@ -149,26 +149,27 @@ const prevMonthDays = computed(() => {
 
 /** 所有禁选日期集合（Set<YYYY-MM-DD>），用于 O(1) 查询 */
 const disabledDateSet = computed<Set<string>>(() => {
-  const set = new Set<string>()
+  const result = new Set<string>()
 
-  for (const range of props.disabledDates) {
+  props.disabledDates.forEach((range) => {
     // 单个日期列表
     if (range.dates) {
-      for (const d of range.dates) {
-        if (d) set.add(d)
-      }
+      range.dates.forEach((d) => {
+        if (d) result.add(d)
+      })
     }
     // 日期范围（闭区间）
     if (range.start && range.end) {
       let cursor = dayjs(range.start)
       const end = dayjs(range.end)
       while (cursor.isBefore(end) || cursor.isSame(end, 'day')) {
-        set.add(cursor.format(dateFormat.value))
+        result.add(cursor.format(dateFormat.value))
         cursor = cursor.add(1, 'day')
       }
     }
-  }
-  return set
+  })
+
+  return result
 })
 
 /** minDate 的 dayjs 实例 */
@@ -315,13 +316,6 @@ function togglePanel(): void {
   if (isOpen.value) {
     syncMonthToSelected()
   }
-}
-
-/** 打开面板并同步月份为选中值所在月 */
-function openPanel(): void {
-  if (props.disabled || props.readonly) return
-  syncMonthToSelected()
-  isOpen.value = true
 }
 
 /** 同步当前展示月份到选中值 */
