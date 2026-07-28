@@ -1,17 +1,3 @@
-// MySQL 8.0 DAL 适配器：实现 DbAdapter 全 16 方法。
-//
-// 与 SQLite 版对齐契约：
-//   - 类型映射：主键 BIGINT UNSIGNED → Number；布尔 TINYINT(1) 0/1 → boolean；
-//     日期由 dateStrings: true 拿字符串再 String(...); DECIMAL → Number(...)
-//   - 占位符 ?（mysql2 promise 数组形式同）
-//   - listSubscriptions 三 view 与 SQLite 版 SQL 完全一致（业务语义布尔字段 0/1）
-//   - UPDATE updated_at 使用 NOW() 而非 SQLite 的 datetime('now')
-//   - 写入布尔：archived / autoRenew → boolean ? 1 : 0
-//
-// 关键开关：
-//   - createPool 必须 multipleStatements: true（整段 .sql 一次 query）
-//   - createPool 必须 dateStrings: true（DATETIME/DATE 列回字符串，对齐业务代码）
-
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise'
 import { config } from '../config/index.js'
 import { logger } from '../utils/logger.js'
@@ -23,7 +9,7 @@ import type {
   CreateCategoryInput,
   CreateSubscriptionInput,
   SubscriptionFilter,
-  SubscriptionRow,
+  SubscriptionWithCategoryRow,
   UpdateCategoryInput,
   UpdateSubscriptionInput,
 } from '../types/domain.js'
@@ -34,8 +20,6 @@ export interface MysqlPoolOptions {
   multipleStatements?: boolean
 }
 
-// 统一 pool 创建：业务 pool 不开 multipleStatements（最小化多语句注入攻击面），
-// 仅迁移专用 pool 开启（migrate.ts 需一次执行整段 .sql）。
 export const createMysqlPool = (options: MysqlPoolOptions = {}): Pool =>
   mysql.createPool({
     host: config.mysql.host,
@@ -46,10 +30,6 @@ export const createMysqlPool = (options: MysqlPoolOptions = {}): Pool =>
     connectionLimit: config.mysql.connectionLimit,
     multipleStatements: options.multipleStatements ?? false,
     dateStrings: true,
-    // DECIMAL 回字符串，统一由 mapSubscription 用 Number(...) 转换
-    // （不设 decimalNumbers: true，保持默认 string 行为以兼容两种路径）
-    // timezone 仅影响 mysql2 对 Date 对象的写入/读取转换；本项目业务全用字符串
-    // 直进出（dateStrings:true），timezone 实际不参与业务字段转换。
     timezone: 'Z',
   })
 
@@ -60,18 +40,18 @@ const mapCategory = (row: MysqlRow): CategoryRow => ({
   updatedAt: String(row.updated_at),
 })
 
-const mapSubscription = (row: MysqlRow): SubscriptionRow => ({
+const mapSubscriptionWithCategory = (row: MysqlRow): SubscriptionWithCategoryRow => ({
   id: Number(row.id),
   name: String(row.name),
   categoryId: Number(row.category_id),
   price: Number(row.price),
-  billingCycle: String(row.billing_cycle) as SubscriptionRow['billingCycle'],
+  billingCycle: String(row.billing_cycle) as SubscriptionWithCategoryRow['billingCycle'],
   startDate: String(row.start_date),
   expireDate: String(row.expire_date),
   autoRenew: Number(row.auto_renew) === 1,
   note: row.note === null ? null : String(row.note),
-  subscriptionType: String(row.subscription_type) as SubscriptionRow['subscriptionType'],
-  quotaCycle: row.quota_cycle === null ? null : (String(row.quota_cycle) as SubscriptionRow['quotaCycle']),
+  subscriptionType: String(row.subscription_type) as SubscriptionWithCategoryRow['subscriptionType'],
+  quotaCycle: row.quota_cycle === null ? null : (String(row.quota_cycle) as SubscriptionWithCategoryRow['quotaCycle']),
   quotaTotal: row.quota_total === null ? null : Number(row.quota_total),
   quotaUsed: row.quota_used === null ? null : Number(row.quota_used),
   quotaRemaining: row.quota_remaining === null ? null : Number(row.quota_remaining),
@@ -80,7 +60,14 @@ const mapSubscription = (row: MysqlRow): SubscriptionRow => ({
   deletedAt: row.deleted_at === null ? null : String(row.deleted_at),
   createdAt: String(row.created_at),
   updatedAt: String(row.updated_at),
+  categoryName: row.category_name === null ? '' : String(row.category_name),
 })
+
+const SUBSCRIPTION_JOIN_SQL = `
+  SELECT s.*, c.name AS category_name
+  FROM subscription s
+  LEFT JOIN category c ON s.category_id = c.id
+`
 
 export class MySqlAdapter implements DbAdapter {
   private pool: Pool | null = null
@@ -94,7 +81,6 @@ export class MySqlAdapter implements DbAdapter {
 
   async init(): Promise<void> {
     this.pool = createMysqlPool({ multipleStatements: false })
-    // 先 ping 确保连接可用，再跑迁移（迁移也内含 _migrations 建表）
     await this.ping()
     const result = await runMySqlMigrations(this.pool, manifestMysql)
     logger.info('mysql initialized', {
@@ -176,43 +162,58 @@ export class MySqlAdapter implements DbAdapter {
 
   // ---------------- subscription ----------------
 
-  async listSubscriptions(filter: SubscriptionFilter): Promise<SubscriptionRow[]> {
+  private buildFilterClause(filter: SubscriptionFilter): { where: string; params: unknown[] } {
     const conditions: string[] = []
     const params: unknown[] = []
 
     if (filter.view === 'active') {
-      conditions.push('deleted_at IS NULL AND archived = 0')
+      conditions.push('s.deleted_at IS NULL AND s.archived = 0')
     } else if (filter.view === 'archived') {
-      conditions.push('deleted_at IS NULL AND archived = 1')
+      conditions.push('s.deleted_at IS NULL AND s.archived = 1')
     } else {
-      conditions.push('deleted_at IS NOT NULL')
+      conditions.push('s.deleted_at IS NOT NULL')
     }
 
     if (filter.categoryId !== undefined) {
-      conditions.push('category_id = ?')
+      conditions.push('s.category_id = ?')
       params.push(filter.categoryId)
     }
 
     if (filter.search) {
-      conditions.push('name LIKE ?')
+      conditions.push('s.name LIKE ?')
       params.push(`%${filter.search}%`)
     }
 
-    const where = conditions.join(' AND ')
-    const sql = `SELECT * FROM subscription WHERE ${where} ORDER BY expire_date ASC`
+    return { where: conditions.join(' AND '), params }
+  }
+
+  async listSubscriptions(filter: SubscriptionFilter): Promise<SubscriptionWithCategoryRow[]> {
+    const { where, params } = this.buildFilterClause(filter)
+    let sql = `${SUBSCRIPTION_JOIN_SQL} WHERE ${where} ORDER BY s.expire_date ASC`
+
+    if (filter.page !== undefined && filter.pageSize !== undefined) {
+      sql += ' LIMIT ? OFFSET ?'
+      params.push(filter.pageSize, (filter.page - 1) * filter.pageSize)
+    }
+
     const [rows] = await this.conn().query<MysqlRow[]>(sql, params)
-    return rows.map(mapSubscription)
+    return rows.map(mapSubscriptionWithCategory)
   }
 
-  async getSubscriptionById(id: number): Promise<SubscriptionRow | null> {
-    const [rows] = await this.conn().query<MysqlRow[]>(
-      'SELECT * FROM subscription WHERE id = ?',
-      [id],
-    )
-    return rows[0] ? mapSubscription(rows[0]) : null
+  async countSubscriptions(filter: SubscriptionFilter): Promise<number> {
+    const { where, params } = this.buildFilterClause(filter)
+    const sql = `SELECT COUNT(*) AS cnt FROM subscription s WHERE ${where}`
+    const [rows] = await this.conn().query<MysqlRow[]>(sql, params)
+    return Number(rows[0]?.cnt ?? 0)
   }
 
-  async createSubscription(input: CreateSubscriptionInput): Promise<SubscriptionRow> {
+  async getSubscriptionById(id: number): Promise<SubscriptionWithCategoryRow | null> {
+    const sql = `${SUBSCRIPTION_JOIN_SQL} WHERE s.id = ?`
+    const [rows] = await this.conn().query<MysqlRow[]>(sql, [id])
+    return rows[0] ? mapSubscriptionWithCategory(rows[0]) : null
+  }
+
+  async createSubscription(input: CreateSubscriptionInput): Promise<SubscriptionWithCategoryRow> {
     const [result] = await this.conn().query<ResultSetHeader>(
       `INSERT INTO subscription
          (name, category_id, price, billing_cycle, start_date, expire_date, auto_renew, note,
@@ -243,7 +244,7 @@ export class MySqlAdapter implements DbAdapter {
   async updateSubscription(
     id: number,
     input: UpdateSubscriptionInput,
-  ): Promise<SubscriptionRow | null> {
+  ): Promise<SubscriptionWithCategoryRow | null> {
     await this.conn().query(
       `UPDATE subscription SET
          name = ?, category_id = ?, price = ?, billing_cycle = ?,
@@ -279,17 +280,19 @@ export class MySqlAdapter implements DbAdapter {
     )
   }
 
-  async restoreSubscription(id: number): Promise<void> {
+  async restoreSubscription(id: number): Promise<SubscriptionWithCategoryRow | null> {
     await this.conn().query(
       'UPDATE subscription SET deleted_at = NULL, updated_at = NOW() WHERE id = ?',
       [id],
     )
+    return this.getSubscriptionById(id)
   }
 
-  async setArchived(id: number, archived: boolean): Promise<void> {
+  async setArchived(id: number, archived: boolean): Promise<SubscriptionWithCategoryRow | null> {
     await this.conn().query(
       'UPDATE subscription SET archived = ?, updated_at = NOW() WHERE id = ?',
       [archived ? 1 : 0, id],
     )
+    return this.getSubscriptionById(id)
   }
 }

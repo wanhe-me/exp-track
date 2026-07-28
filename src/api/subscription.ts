@@ -1,13 +1,15 @@
 import { api, unwrap, type ApiEnvelope } from '@/lib/api'
-import type { Subscription, SubscriptionInput, SubscriptionView } from '@/types'
+import type { PaginatedResult, Subscription, SubscriptionInput, SubscriptionView } from '@/types'
 
 export const subscriptionApi = {
   list: async (params?: {
     view?: SubscriptionView
     categoryId?: number
     search?: string
-  }): Promise<Subscription[]> => {
-    const res = await api.get<ApiEnvelope<Subscription[]>>('/api/subscriptions', {
+    page?: number
+    pageSize?: number
+  }): Promise<PaginatedResult<Subscription>> => {
+    const res = await api.get<ApiEnvelope<PaginatedResult<Subscription>>>('/api/subscriptions', {
       params,
     })
     return unwrap(res)

@@ -52,7 +52,7 @@ export interface UpdateCategoryInput {
   name: string
 }
 
-export interface CreateSubscriptionInput {
+export interface SubscriptionInput {
   name: string
   categoryId: number
   price: number
@@ -69,25 +69,25 @@ export interface CreateSubscriptionInput {
   quotaUnit: string | null
 }
 
-export interface UpdateSubscriptionInput {
-  name: string
-  categoryId: number
-  price: number
-  billingCycle: BillingCycle
-  startDate: string
-  expireDate: string
-  autoRenew: boolean
-  note: string | null
-  subscriptionType: SubscriptionType
-  quotaCycle: QuotaCycle | null
-  quotaTotal: number | null
-  quotaUsed: number | null
-  quotaRemaining: number | null
-  quotaUnit: string | null
-}
+export type CreateSubscriptionInput = SubscriptionInput
+
+export type UpdateSubscriptionInput = SubscriptionInput
 
 export interface SubscriptionFilter {
   view: SubscriptionView
   categoryId?: number
   search?: string
+  page?: number
+  pageSize?: number
+}
+
+export interface SubscriptionWithCategoryRow extends SubscriptionRow {
+  categoryName: string
+}
+
+export interface PaginatedResult<T> {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
 }

@@ -1,14 +1,15 @@
 import { z } from 'zod'
 import { getDb } from '../../dal/index.js'
-import { DomainError } from '../../dal/types.js'
+import { DomainError } from '../../types/errors.js'
 import type {
   BillingCycle,
+  PaginatedResult,
   QuotaCycle,
   SubscriptionFilter,
-  SubscriptionRow,
   SubscriptionStatus,
   SubscriptionType,
   SubscriptionView,
+  SubscriptionWithCategoryRow,
 } from '../../types/domain.js'
 import {
   calcRemainingDays,
@@ -17,13 +18,11 @@ import {
   isValidDateStr,
 } from '../../utils/date.js'
 
-// 校验：价格为非负、精度 2 位小数
 const priceField = z
   .number({ message: '价格必填' })
   .nonnegative({ message: '价格不能为负' })
   .refine((v) => Math.round(v * 100) === v * 100, { message: '价格精度不能超过 2 位小数' })
 
-// 校验：额度数值字段为非负、精度 2 位小数、可空（与 priceField 同口径）
 const quotaNumberField = z
   .number({ message: '额度必须为数字' })
   .nonnegative({ message: '额度不能为负' })
@@ -86,14 +85,13 @@ export interface SubscriptionDto {
   status: SubscriptionStatus
 }
 
-const buildDto = async (row: SubscriptionRow): Promise<SubscriptionDto> => {
-  const category = await getDb().getCategoryById(row.categoryId)
+const buildDto = (row: SubscriptionWithCategoryRow): SubscriptionDto => {
   const remainingDays = calcRemainingDays(row.expireDate)
   return {
     id: row.id,
     name: row.name,
     categoryId: row.categoryId,
-    categoryName: category?.name ?? '',
+    categoryName: row.categoryName,
     price: row.price,
     billingCycle: row.billingCycle,
     startDate: row.startDate,
@@ -115,7 +113,6 @@ const buildDto = async (row: SubscriptionRow): Promise<SubscriptionDto> => {
   }
 }
 
-// 跨字段校验：到期日期不得早于开始日期
 const validateCrossFields = (startDate: string, expireDate: string): void => {
   if (!isExpireOnAfterStart(startDate, expireDate)) {
     throw new DomainError(
@@ -127,8 +124,6 @@ const validateCrossFields = (startDate: string, expireDate: string): void => {
   }
 }
 
-// 额度校验与补全：standard 型清空所有额度字段；quota 型校验总额/已用/剩余
-// 一致性并补全缺失项（二选一填写场景，后端兜底计算另一个），保证入库三字段自洽。
 const normalizeQuota = (
   parsed: Pick<
     z.infer<typeof subscriptionSchema>,
@@ -153,7 +148,6 @@ const normalizeQuota = (
     }
   }
 
-  // quota 型
   if (!parsed.quotaCycle) {
     throw new DomainError('INVALID_QUOTA', '额度型订阅必须选择额度周期', 400)
   }
@@ -168,7 +162,6 @@ const normalizeQuota = (
   let finalUsed: number
   let finalRemaining: number
   if (used != null && remaining != null) {
-    // 二者都填：校验一致性（允许 0.01 精度误差）
     if (Math.abs(used + remaining - total) > 0.01) {
       throw new DomainError(
         'INVALID_QUOTA',
@@ -212,17 +205,25 @@ const validateCategoryExists = async (categoryId: number): Promise<void> => {
 
 export const listSubscriptions = async (
   view: SubscriptionView,
+  page: number,
+  pageSize: number,
   categoryId?: number,
   search?: string,
-): Promise<SubscriptionDto[]> => {
-  const filter: SubscriptionFilter = { view }
+): Promise<PaginatedResult<SubscriptionDto>> => {
+  const filter: SubscriptionFilter = { view, page, pageSize }
   if (categoryId !== undefined) filter.categoryId = categoryId
   if (search) filter.search = search
 
-  const rows = await getDb().listSubscriptions(filter)
-  const dtos = await Promise.all(rows.map(buildDto))
-  // 按剩余天数升序（临期靠前），已过期（负数）自然排在最前
-  return dtos.sort((a, b) => a.remainingDays - b.remainingDays)
+  const [rows, total] = await Promise.all([
+    getDb().listSubscriptions(filter),
+    getDb().countSubscriptions(filter),
+  ])
+
+  const items = rows
+    .map(buildDto)
+    .sort((a, b) => a.remainingDays - b.remainingDays)
+
+  return { items, total, page, pageSize }
 }
 
 export const getSubscriptionById = async (id: number): Promise<SubscriptionDto> => {
@@ -294,7 +295,6 @@ export const updateSubscription = async (
   return buildDto(row)
 }
 
-// 软删除（FR-03）
 export const deleteSubscription = async (id: number): Promise<void> => {
   const existing = await getDb().getSubscriptionById(id)
   if (!existing) {
@@ -303,7 +303,6 @@ export const deleteSubscription = async (id: number): Promise<void> => {
   await getDb().softDeleteSubscription(id)
 }
 
-// 恢复软删除（FR-04）
 export const restoreSubscription = async (id: number): Promise<SubscriptionDto> => {
   const existing = await getDb().getSubscriptionById(id)
   if (!existing) {
@@ -312,11 +311,10 @@ export const restoreSubscription = async (id: number): Promise<SubscriptionDto> 
   if (existing.deletedAt === null) {
     throw new DomainError('NOT_DELETED', '该订阅未被删除，无需恢复', 400)
   }
-  await getDb().restoreSubscription(id)
-  return buildDto((await getDb().getSubscriptionById(id))!)
+  const row = await getDb().restoreSubscription(id)
+  return buildDto(row!)
 }
 
-// 归档（FR-04）
 export const archiveSubscription = async (id: number): Promise<SubscriptionDto> => {
   const existing = await getDb().getSubscriptionById(id)
   if (!existing) {
@@ -325,11 +323,10 @@ export const archiveSubscription = async (id: number): Promise<SubscriptionDto> 
   if (existing.deletedAt !== null) {
     throw new DomainError('SUBSCRIPTION_DELETED', '已删除的订阅不能归档', 400)
   }
-  await getDb().setArchived(id, true)
-  return buildDto((await getDb().getSubscriptionById(id))!)
+  const row = await getDb().setArchived(id, true)
+  return buildDto(row!)
 }
 
-// 取消归档（FR-04）
 export const unarchiveSubscription = async (id: number): Promise<SubscriptionDto> => {
   const existing = await getDb().getSubscriptionById(id)
   if (!existing) {
@@ -338,6 +335,6 @@ export const unarchiveSubscription = async (id: number): Promise<SubscriptionDto
   if (existing.deletedAt !== null) {
     throw new DomainError('SUBSCRIPTION_DELETED', '已删除的订阅不能取消归档', 400)
   }
-  await getDb().setArchived(id, false)
-  return buildDto((await getDb().getSubscriptionById(id))!)
+  const row = await getDb().setArchived(id, false)
+  return buildDto(row!)
 }

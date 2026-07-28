@@ -61,6 +61,13 @@ export interface SubscriptionInput {
   quotaUnit: string | null
 }
 
+export interface PaginatedResult<T> {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
+}
+
 // 领域配置（PRD 第 5 章，与后端保持一致）
 export const domainConfig = {
   statusThresholds: {

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { getDb } from '../../dal/index.js'
-import { DomainError } from '../../dal/types.js'
+import { DomainError } from '../../types/errors.js'
 import type { CategoryRow } from '../../types/domain.js'
 
 export const categorySchema = z.object({

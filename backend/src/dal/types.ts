@@ -3,7 +3,7 @@ import type {
   CreateCategoryInput,
   CreateSubscriptionInput,
   SubscriptionFilter,
-  SubscriptionRow,
+  SubscriptionWithCategoryRow,
   UpdateCategoryInput,
   UpdateSubscriptionInput,
 } from '../types/domain.js'
@@ -24,25 +24,12 @@ export interface DbAdapter {
   deleteCategory(id: number): Promise<void>
 
   // ---- subscription ----
-  listSubscriptions(filter: SubscriptionFilter): Promise<SubscriptionRow[]>
-  getSubscriptionById(id: number): Promise<SubscriptionRow | null>
-  createSubscription(input: CreateSubscriptionInput): Promise<SubscriptionRow>
-  updateSubscription(id: number, input: UpdateSubscriptionInput): Promise<SubscriptionRow | null>
+  listSubscriptions(filter: SubscriptionFilter): Promise<SubscriptionWithCategoryRow[]>
+  countSubscriptions(filter: SubscriptionFilter): Promise<number>
+  getSubscriptionById(id: number): Promise<SubscriptionWithCategoryRow | null>
+  createSubscription(input: CreateSubscriptionInput): Promise<SubscriptionWithCategoryRow>
+  updateSubscription(id: number, input: UpdateSubscriptionInput): Promise<SubscriptionWithCategoryRow | null>
   softDeleteSubscription(id: number): Promise<void>
-  restoreSubscription(id: number): Promise<void>
-  setArchived(id: number, archived: boolean): Promise<void>
-}
-
-export class DomainError extends Error {
-  code: string
-  status: number
-  details?: unknown
-
-  constructor(code: string, message: string, status = 400, details?: unknown) {
-    super(message)
-    this.code = code
-    this.status = status
-    this.details = details
-    this.name = 'DomainError'
-  }
+  restoreSubscription(id: number): Promise<SubscriptionWithCategoryRow | null>
+  setArchived(id: number, archived: boolean): Promise<SubscriptionWithCategoryRow | null>
 }
