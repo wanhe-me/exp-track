@@ -2,7 +2,7 @@
 import { RouterLink, RouterView } from 'vue-router'
 import { computed } from 'vue'
 import { useSubscriptionStore } from '@/stores/subscription'
-import ThemeToggle from '@/components/base/ThemeToggle.vue'
+import ThemeToggle from '@/components/base/controls/ThemeToggle.vue'
 
 const subscriptionStore = useSubscriptionStore()
 

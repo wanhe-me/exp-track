@@ -10,21 +10,12 @@ defineProps<{
     <div class="empty-icon">
       <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
         <rect
-          x="12"
-          y="14"
-          width="40"
-          height="36"
-          rx="6"
-          stroke="var(--color-text-disabled)"
-          stroke-width="2"
+          x="12" y="14" width="40" height="36" rx="6"
+          stroke="var(--color-text-disabled)" stroke-width="2"
         />
         <line
-          x1="12"
-          y1="26"
-          x2="52"
-          y2="26"
-          stroke="var(--color-text-disabled)"
-          stroke-width="2"
+          x1="12" y1="26" x2="52" y2="26"
+          stroke="var(--color-text-disabled)" stroke-width="2"
         />
         <circle cx="20" cy="20" r="2" fill="var(--color-text-disabled)" />
         <circle cx="26" cy="20" r="2" fill="var(--color-text-disabled)" />
@@ -48,17 +39,19 @@ defineProps<{
 
 .empty-icon {
   margin-bottom: var(--space-4);
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .empty-title {
   font-size: var(--font-size-md);
-  color: var(--color-text-secondary);
+  font-weight: 600;
+  color: var(--color-text-primary);
   margin-bottom: var(--space-2);
 }
 
 .empty-desc {
   font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
+  line-height: var(--line-height-base);
 }
 </style>

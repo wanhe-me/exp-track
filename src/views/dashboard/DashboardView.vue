@@ -6,8 +6,8 @@ import { useSubscriptionStore } from '@/stores/subscription'
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
 import SubscriptionCard from '@/components/SubscriptionCard.vue'
 import SubscriptionFormDialog from '@/components/SubscriptionFormDialog.vue'
-import ConfirmDialog from '@/components/base/ConfirmDialog.vue'
-import EmptyState from '@/components/base/EmptyState.vue'
+import ConfirmDialog from '@/components/base/dialog/ConfirmDialog.vue'
+import EmptyState from '@/components/base/display/EmptyState.vue'
 import type { SubscriptionInput } from '@/types'
 
 const categoryStore = useCategoryStore()

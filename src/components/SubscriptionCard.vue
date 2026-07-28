@@ -3,8 +3,8 @@ import type { Subscription, SubscriptionView } from '@/types'
 import { BILLING_CYCLE_LABELS } from '@/types'
 import { domainConfig } from '@/types'
 import { formatDate, remainingDaysLabel } from '@/utils/date'
-import StatusBadge from './base/StatusBadge.vue'
-import CategoryTag from './base/CategoryTag.vue'
+import StatusBadge from './base/display/StatusBadge.vue'
+import CategoryTag from './base/display/CategoryTag.vue'
 
 const props = defineProps<{
   subscription: Subscription

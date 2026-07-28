@@ -2,8 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCategoryStore } from '@/stores/category'
-import ConfirmDialog from '@/components/base/ConfirmDialog.vue'
-import EmptyState from '@/components/base/EmptyState.vue'
+import ConfirmDialog from '@/components/base/dialog/ConfirmDialog.vue'
+import EmptyState from '@/components/base/display/EmptyState.vue'
 import type { Category } from '@/types'
 
 const categoryStore = useCategoryStore()

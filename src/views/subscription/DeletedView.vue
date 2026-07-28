@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
 import SubscriptionCard from '@/components/SubscriptionCard.vue'
-import EmptyState from '@/components/base/EmptyState.vue'
+import EmptyState from '@/components/base/display/EmptyState.vue'
 
 const subscriptionStore = useSubscriptionStore()
 const { subscriptions, loading } = storeToRefs(subscriptionStore)

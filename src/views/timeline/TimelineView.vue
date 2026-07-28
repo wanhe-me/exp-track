@@ -7,7 +7,7 @@ import { useCategoryStore } from '@/stores/category'
 import { domainConfig } from '@/types'
 import type { SubscriptionStatus } from '@/types'
 import { formatDate, remainingDaysLabel } from '@/utils/date'
-import EmptyState from '@/components/base/EmptyState.vue'
+import EmptyState from '@/components/base/display/EmptyState.vue'
 
 const subscriptionStore = useSubscriptionStore()
 const categoryStore = useCategoryStore()
