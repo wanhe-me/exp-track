@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { computed } from 'vue'
 import { useSubscriptionStore } from '@/stores/subscription'
 import ThemeToggle from '@/components/base/controls/ThemeToggle.vue'
 import SizeControl from '@/components/base/controls/SizeControl.vue'
 
 const subscriptionStore = useSubscriptionStore()
+const route = useRoute()
 
 // 临期/已过期数量徽标
 const alertCount = computed(() => {
@@ -15,19 +16,26 @@ const alertCount = computed(() => {
 })
 
 const navItems = [
-  { to: '/', label: '看板', exact: true },
+  { to: '/dashboard', label: '看板', exact: true },
   { to: '/timeline', label: '时间轴' },
   { to: '/archived', label: '已归档' },
   { to: '/deleted', label: '回收站' },
   { to: '/categories', label: '分类' },
 ]
+
+// 顶部导航激活判断：exact 项要求路径完全相等，其余项允许子路径匹配，
+// 为未来嵌套路由留余地。
+const isLinkActive = (item: { to: string; exact?: boolean }): boolean => {
+  if (item.exact) return route.path === item.to
+  return route.path === item.to || route.path.startsWith(item.to + '/')
+}
 </script>
 
 <template>
   <div class="layout">
     <header class="layout-header glass">
       <div class="header-inner">
-        <RouterLink to="/" class="logo">
+        <RouterLink to="/dashboard" class="logo">
           <FaIcon icon="clock" class="logo-icon" />
           <span class="logo-text">exp-track</span>
         </RouterLink>
@@ -38,10 +46,10 @@ const navItems = [
               :key="item.to"
               :to="item.to"
               class="nav-link"
-              :class="{ exact: item.exact }"
+              :class="{ 'nav-link-active': isLinkActive(item) }"
             >
               {{ item.label }}
-              <span v-if="item.to === '/' && alertCount > 0" class="nav-badge">{{ alertCount }}</span>
+              <span v-if="item.to === '/dashboard' && alertCount > 0" class="nav-badge">{{ alertCount }}</span>
             </RouterLink>
           </nav>
           <ThemeToggle />
@@ -131,7 +139,7 @@ const navItems = [
   color: var(--color-text-primary);
 }
 
-.nav-link.router-link-active {
+.nav-link.nav-link-active {
   background-color: var(--color-primary-soft);
   color: var(--color-primary);
   font-weight: 500;

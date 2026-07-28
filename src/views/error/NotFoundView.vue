@@ -4,14 +4,14 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const goHome = (): void => {
-  void router.replace('/')
+  void router.replace({ name: 'dashboard' })
 }
 
 const goBack = (): void => {
   if (window.history.length > 1) {
     router.back()
   } else {
-    void router.replace('/')
+    void router.replace({ name: 'dashboard' })
   }
 }
 </script>

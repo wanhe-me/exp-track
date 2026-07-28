@@ -18,7 +18,7 @@ const errorKey: ErrorKey = (Object.hasOwn(errorConfigMap, errorType) ? errorType
 const config = errorConfigMap[errorKey]
 
 const goHome = (): void => {
-  void router.replace('/')
+  void router.replace({ name: 'dashboard' })
 }
 
 const retry = (): void => {

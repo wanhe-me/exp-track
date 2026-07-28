@@ -15,6 +15,10 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         path: '',
+        redirect: { name: 'dashboard' },
+      },
+      {
+        path: 'dashboard',
         name: 'dashboard',
         component: () => import('@/views/dashboard/DashboardView.vue'),
         meta: {
