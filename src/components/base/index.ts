@@ -16,6 +16,7 @@ export { default as ConfirmDialog } from './dialog/ConfirmDialog.vue'
 
 // ---- controls（控件/操作组件） ----
 export { default as ThemeToggle } from './controls/ThemeToggle.vue'
+export { default as SizeControl } from './controls/SizeControl.vue'
 
 // ---- form（表单输入组件） ----
 export { default as DatePicker } from './form/DatePicker.vue'

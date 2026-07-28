@@ -28,6 +28,13 @@
         const saved = localStorage.getItem(STORAGE_KEY);
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         document.documentElement.setAttribute('data-theme', saved === 'dark' || saved === 'light' ? saved : prefersDark ? 'dark' : 'light');
+
+        const SCALE_KEY = 'exp-track-ui-scale';
+        const scaleRaw = localStorage.getItem(SCALE_KEY);
+        const scaleNum = scaleRaw === null ? NaN : Number(scaleRaw);
+        if (scaleNum === 0.9 || scaleNum === 1.0 || scaleNum === 1.2 || scaleNum === 1.5) {
+          document.documentElement.style.setProperty('--ui-scale', String(scaleNum));
+        }
       })();
     </script>
   </head>
