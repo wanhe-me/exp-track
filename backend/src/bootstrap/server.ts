@@ -8,7 +8,7 @@ const app = createApp()
 const start = async (): Promise<void> => {
   // 初始化数据库（建表）
   await initDb()
-  logger.info('database initialized', { driver: config.dbDriver })
+  logger.info('database initialized', { driver: 'mysql' })
 
   const server = app.listen(config.port, config.host, () => {
     logger.info('server started', {

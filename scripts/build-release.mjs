@@ -6,14 +6,13 @@
 //   release/backend/
 //     dist/                      编译产物（含 .sql 迁移脚本）
 //     package.json               裁剪版（仅生产依赖 + start 脚本）
-//     pnpm-workspace.yaml        allowBuilds：允许 better-sqlite3 原生编译（服务器 pnpm install --prod）
 //     .env.example               环境变量参考
 //   release/nginx.conf.example   同源部署 nginx 配置示例（静态托管 + /api 反代）
 //
 // 服务器上：cd backend && pnpm install --prod && pnpm start
 // （@exp-track/shared 仅后端类型期使用，已擦除；release 无需 workspace 与 shared 产物。）
 
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -55,11 +54,6 @@ writeFileSync(join(out, 'backend', 'package.json'), JSON.stringify(prodPkg, null
 
 // 生产安装与配置所需文件（@exp-track/shared 仅类型期使用，已擦除，无需打入 release）
 cpSync(join(root, 'backend', '.env.example'), join(out, 'backend', '.env.example'))
-// 服务器端 pnpm v11 用 allowBuilds 批准 better-sqlite3 原生编译（release 为独立包，无 workspace）
-writeFileSync(
-  join(out, 'backend', 'pnpm-workspace.yaml'),
-  '# release 独立包：仅声明允许 better-sqlite3 原生构建\nallowBuilds:\n  better-sqlite3: true\n',
-)
 
 // nginx 配置示例（同源部署：静态托管 + /api 反代）
 cpSync(join(root, 'deploy', 'nginx.conf.example'), join(out, 'nginx.conf.example'))

@@ -20,11 +20,6 @@ const intEnv = (name: string, fallback: number): number => {
   return parsed
 }
 
-export type DbDriver = 'sqlite' | 'mysql'
-
-const dbDriver: DbDriver =
-  process.env.DB_TYPE === 'mysql' ? 'mysql' : 'sqlite'
-
 // 领域配置（PRD 第 5 章）：结构类型与默认值由 @exp-track/shared 提供，env 在此覆盖。
 export const domainConfig: DomainConfig = {
   statusThresholds: {
@@ -47,10 +42,6 @@ export const config = {
   host: process.env.HOST ?? '127.0.0.1',
   port: intEnv('PORT', 15180),
   corsOrigin: process.env.CORS_ORIGIN?.split(',').map(s => s.trim()) ?? ['http://127.0.0.1:15173'],
-  dbDriver,
-  sqlite: {
-    path: process.env.SQLITE_PATH ?? './data/exp-track.db',
-  },
   mysql: {
     host: process.env.MYSQL_HOST ?? '127.0.0.1',
     port: intEnv('MYSQL_PORT', 13306),

@@ -1,6 +1,6 @@
 // 自建迁移执行器（MySQL 8.0 方言）。
 //
-// 设计要点（与 SQLite 版对齐）：
+// 设计要点：
 //   1) 单一权威：_migrations 表 + 文件名版本号 + sha256 checksum
 //   2) 基线（baseline）检测：旧库无 _migrations 但已有 category+subscription 两表时，
 //      自动把 001_init 标记为已应用，**绝不触碰已存在的表与数据**
@@ -29,7 +29,7 @@ export interface MigrationRunResult {
 }
 
 const ensureMigrationsTable = async (conn: PoolConnection): Promise<void> => {
-  // 与 SQLite 版字段一致；DEFAULT CURRENT_TIMESTAMP 让 001_init 标记的 applied_at 也有合理值
+  // DEFAULT CURRENT_TIMESTAMP 让 001_init 标记的 applied_at 也有合理值
   await conn.query(
     `CREATE TABLE IF NOT EXISTS ${MIGRATIONS_TABLE} (
        version    VARCHAR(64)  NOT NULL,
@@ -145,7 +145,6 @@ export const runMySqlMigrations = async (
     }
 
     // baseline 标记写入库后重新拉取已应用记录，确保 baseline 记录纳入 checksum 校验
-    // （对齐 sqlite 版 verifyChecksums 内部重新查库的语义）
     const appliedAfterBaseline = await listApplied(conn)
     verifyChecksums(entries, appliedAfterBaseline)
 

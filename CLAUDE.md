@@ -8,10 +8,9 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 
 前端经 Axios 调后端 REST API，双方遵守统一响应信封。产品核心痛点是「不知道有哪些订阅、何时过期」，可视化只做「未来到期时间轴」一张图（P1）。详见 `docs/PRD/expTrack_PRD.md`。
 
-> **当前实现状态**：MVP 第一阶段功能（FR-01~FR-10）已全部实现并跑通。
-> - **快速部署（SQLite）**已完整可用，为默认部署模式，零外部依赖、开箱即用。
-> - **稳定部署（MySQL）**已完整可用：`docker compose up -d` 拉起 MySQL 8.0 + phpMyAdmin，`backend/.env` 设 `DB_TYPE=mysql` 即可。`dal/mysql.ts` 与 `migrator/mysql.ts` 实现完整，含 baseline 检测 + checksum 校验 + 事务。
-> - 数据模型（`subscription` / `category` 两表）按 PRD 4.1/4.2 实现，由自建迁移系统（`backend/src/dal/migrator/`）按版本号顺序自动建表与升级；已有数据库通过 baseline 检测安全迁移。双方言迁移脚本分目录维护（`migrations/sqlite/` 与 `migrations/mysql/`），各自在 `manifest.ts` 的 `manifestSqlite` / `manifestMysql` 注册。**当前以 MySQL 为开发主线**：新增迁移默认只写 MySQL 一份（迁移脚本 + `dal/mysql.ts` 适配器代码），同步更新 `sql/schema.sql`；SQLite 侧（迁移脚本 + `manifestSqlite` 注册 + `dal/sqlite.ts` 的 SQL 读写）待 MySQL 版本开发完毕后，**由开发者主动说明「同步 SQLite」再执行**——在此之前不写 SQLite 迁移、不完善 SQLite 的 SQL。期间 `dal/sqlite.ts` 因 `types/domain.ts` 类型变更导致 `tsc` 编译失败时，仅做最小改动让编译通过（返回 `*Row` 的映射函数给新增必填字段填合理默认值、可空字段填 `null`，但 INSERT/UPDATE SQL 不加新列），SQLite 部署模式期间不可用（运行时表无新列，属预期行为）。
+> **当前实现状态**：MVP 第一阶段功能（FR-01~FR-13）已全部实现并跑通。
+> - **MySQL 部署**为唯一部署模式：`docker compose up -d` 拉起 MySQL 8.0 + phpMyAdmin，`backend/.env` 配置 `MYSQL_*` 即可。`dal/mysql.ts` 与 `migrator/mysql.ts` 实现完整，含 baseline 检测 + checksum 校验 + 事务。
+> - 数据模型（`subscription` / `category` / `quota_pack` 三表）按 PRD 4.1/4.2/4.3 实现，由自建迁移系统（`backend/src/dal/migrator/`）按版本号顺序自动建表与升级；已有数据库通过 baseline 检测安全迁移。迁移脚本位于 `migrations/mysql/`，在 `manifest.ts` 的 `manifestMysql` 注册。
 
 ## 常用命令
 
@@ -21,12 +20,12 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 - `pnpm dev`：用 concurrently 同时拉起前后端。
 - `pnpm dev:front`：启动前端 Vite dev server（127.0.0.1:15173），含 HMR。
 - `pnpm dev:back`：启动后端 API（127.0.0.1:15180），nodemon + tsx 热重载。
-- `pnpm build`：完整打包前后端——依次 `vue-tsc` 类型检查 → `build:front`（vite build，自动加载 `.env.production`：同源部署 `VITE_API_BASE_URL=/`）→ `build:back`（backend tsc）→ `build:release`（`scripts/build-release.mjs` 组装部署产物到 `release/`，含 `release/frontend/` 静态文件、`release/backend/` 最小运行集（dist + 裁剪版 package.json + pnpm-lock.yaml + pnpm-workspace.yaml + .env.example）与 `release/nginx.conf.example`（同源部署示例：静态托管 + `/api` 反代到 127.0.0.1:15180，源文件在 `deploy/`）；服务器上 `cd backend && pnpm install --prod && pnpm start`）。
+- `pnpm build`：完整打包前后端--依次 `vue-tsc` 类型检查 -> `build:front`（vite build，自动加载 `.env.production`：同源部署 `VITE_API_BASE_URL=/`）-> `build:back`（backend tsc）-> `build:release`（`scripts/build-release.mjs` 组装部署产物到 `release/`，含 `release/frontend/` 静态文件、`release/backend/` 最小运行集（dist + 裁剪版 package.json + pnpm-lock.yaml + .env.example）与 `release/nginx.conf.example`（同源部署示例：静态托管 + `/api` 反代到 127.0.0.1:15180，源文件在 `deploy/`）；服务器上 `cd backend && pnpm install --prod && pnpm start`）。
 - `pnpm build:front` / `pnpm build:back` / `pnpm build:release`：单独执行对应打包步骤。
 - `pnpm type-check`：仅运行 `vue-tsc --build` 类型检查。
 - `pnpm lint`：依次运行 oxlint（`--fix`）与 eslint（`--fix`）。
 - `pnpm preview`：预览生产构建产物。
-- `pnpm migrate` / `pnpm migrate:status` / `pnpm migrate:up`：迁移 CLI 转发到 `backend/`，驱动由 `backend/.env` 的 `DB_TYPE` 决定（`sqlite` / `mysql`）。`status` 列已应用 / 待执行；`up` 应用所有待执行迁移（已含 baseline 检测与 checksum 校验）。
+- `pnpm migrate` / `pnpm migrate:status` / `pnpm migrate:up`：迁移 CLI 转发到 `backend/`，底层固定 MySQL。`status` 列已应用 / 待执行；`up` 应用所有待执行迁移（已含 baseline 检测与 checksum 校验）。
 
 
 ### 后端（`backend/`）
@@ -37,8 +36,7 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 - `pnpm lint`：委托根目录 `pnpm lint`（`pnpm --dir .. lint`，执行 oxlint + eslint），覆盖 backend `.ts` 文件检查（backend 未单独安装 eslint 依赖）。
 
 ### 数据库
-- **快速部署（默认，SQLite）**：无需任何容器或外部数据库服务。`DB_TYPE=sqlite`（默认），数据库文件存于 `backend/data/exp-track.db`（首次启动自动创建目录与建表）。
-- **稳定部署（MySQL，Docker）**：根目录 `cp .env.example .env` → `docker compose up -d` 拉起 MySQL 8.0 + phpMyAdmin → `backend/` 下 `cp .env.example .env` 并设 `DB_TYPE=mysql`，其余 `MYSQL_*` 默认值已对齐 docker-compose。mysql2 驱动 + 迁移系统自动建表，phpMyAdmin 入口 `http://127.0.0.1:18080`。
+- **MySQL（Docker）**：根目录 `cp .env.example .env` -> `docker compose up -d` 拉起 MySQL 8.0 + phpMyAdmin -> `backend/` 下 `cp .env.example .env`，`MYSQL_*` 默认值已对齐 docker-compose。mysql2 驱动 + 迁移系统自动建表，phpMyAdmin 入口 `http://127.0.0.1:18080`。
 
 > 本项目**未配置测试框架**（无 vitest/jest），暂无测试/单测命令。
 
@@ -57,7 +55,7 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 |------|------|
 | 新增 / 修改后端接口或业务域 | `backend/src/services/<domain>/`、`http/router.ts`、`utils/response.ts`；参考 `health/` `category/` `subscription/` 中任一已有域 |
 | 操作数据库 / 加表 | `backend/src/dal/`、`types/domain.ts`（业务代码统一经 `getDb()`，勿直接 import 具体数据库驱动） |
-| 加字段 / 改表结构 | 走自建迁移系统：**默认只写 MySQL 一份** `migrations/mysql/00X_xxx.sql` 并在 `manifest.ts` 的 `manifestMysql` 注册，同步更新根目录 `sql/schema.sql`（数据库表结构唯一可信源，MySQL 8.0 标准，供人工查阅；字段变更先改此文件再写迁移脚本）；SQLite 侧（`migrations/sqlite/` + `manifestSqlite` + `dal/sqlite.ts` 的 SQL 读写）待 MySQL 版本开发完毕后**由开发者主动说明「同步 SQLite」再执行**--在此之前只对 `dal/sqlite.ts` 做最小改动让 `tsc` 编译通过（新增必填字段填默认值、可空字段填 `null`，但 SQL 不加新列），SQLite 部署模式期间不可用。**禁止改 001_init.sql**（启动时校验 checksum，改动已应用迁移会拒绝启动）。`migrator/sqlite.ts` 与 `migrator/mysql.ts` 各自跑迁移 + baseline 检测 + checksum 校验 |
+| 加字段 / 改表结构 | 走自建迁移系统：写 `migrations/mysql/00X_xxx.sql` 并在 `manifest.ts` 的 `manifestMysql` 注册，同步更新根目录 `sql/schema.sql`（数据库表结构唯一可信源，MySQL 8.0 标准，供人工查阅；字段变更先改此文件再写迁移脚本）；**禁止改 001_init.sql**（启动时校验 checksum，改动已应用迁移会拒绝启动）。`migrator/mysql.ts` 跑迁移 + baseline 检测 + checksum 校验 |
 | 改后端领域类型 | `backend/src/types/domain.ts`（勿从 `config` 或 `dal` 取领域类型） |
 | 改后端配置项 | `backend/src/config/index.ts`（所有配置经 `config` 对象，勿直接读 `process.env`） |
 | 新增 / 修改前端页面 | `src/views/`、`src/router/index.ts`、`src/stores/`、`src/api/` |
@@ -74,8 +72,8 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 |------|------|
 | 前端 dev server | 15173 |
 | 后端 API | 15180 |
-| MySQL（稳定部署，Docker） | 13306 |
-| phpMyAdmin（稳定部署，Docker） | 18080 |
+| MySQL（Docker） | 13306 |
+| phpMyAdmin（Docker） | 18080 |
 
 ## 工程规范与领域约束（来自 PRD）
 
@@ -103,4 +101,4 @@ exp-track 是一个**本地优先的订阅到期追踪与可视化网站**（MVP
 - **分类（FR-10）**：名称 ≤50 唯一；**禁止删除被引用分类**。
 - **货币**：本阶段统一人民币 `¥`，多币种列入第二阶段。
 
-> PRD 8 章验收清单全部勾选（SQLite + MySQL 双部署模式均已端到端可用）。
+> PRD 8 章验收清单全部勾选（MySQL 部署模式已端到端可用）。

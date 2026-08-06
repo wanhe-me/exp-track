@@ -14,7 +14,7 @@ import type {
   UpdateCategoryInput,
 } from '../types/domain.js'
 
-// 数据库适配器抽象（屏蔽 SQLite / MySQL 方言差异）
+// 数据库适配器抽象（屏蔽 MySQL 方言差异）
 export interface DbAdapter {
   init(): Promise<void>
   close(): Promise<void>

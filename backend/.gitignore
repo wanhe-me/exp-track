@@ -4,7 +4,3 @@ dist
 .env.local
 *.log
 *.tsbuildinfo
-
-# SQLite data (file + WAL/SHM sidecars)
-data/
-**/*.db-*

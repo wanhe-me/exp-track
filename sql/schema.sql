@@ -10,8 +10,7 @@
 -- 与迁移脚本的关系：
 --   - 本文件【不参与执行】，仅作设计文档与可信源。
 --   - 实际建表 / 改表由迁移脚本完成：
---       * SQLite 迁移脚本：backend/src/dal/migrations/sqlite/00X_xxx.sql
---       * MySQL  迁移脚本：backend/src/dal/migrations/mysql/00X_xxx.sql
+--       * MySQL 迁移脚本：backend/src/dal/migrations/mysql/00X_xxx.sql
 --     迁移脚本由 migrator 按 manifest 顺序执行，启动时校验已应用迁移的 sha256
 --     checksum，改动已应用迁移会拒绝启动。
 --
@@ -24,8 +23,6 @@
 --
 -- 注意：
 --   - 本文件用 MySQL 8.0 语法书写，便于直观表达字段类型、约束、注释与索引。
---   - SQLite 迁移脚本为保证零依赖开箱即用，类型表达较简化（TEXT 存日期等），
---     但字段集合与语义与本文件保持一致。
 -- =============================================================================
 
 
