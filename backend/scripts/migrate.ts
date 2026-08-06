@@ -17,7 +17,7 @@ import {
 import { getSqliteStatus, runSqliteMigrations } from '../src/dal/migrator/sqlite.js'
 import { getMySqlStatus, runMySqlMigrations } from '../src/dal/migrator/mysql.js'
 import { createMysqlPool } from '../src/dal/mysql.js'
-import { logger } from '../src/utils/logger.js'
+import { logger } from '../src/helper/logger.js'
 
 const ensureDir = (filePath: string): void => {
   const dir = dirname(filePath)

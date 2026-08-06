@@ -4,7 +4,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { updateSeo } from './utils/seo'
-import { registerIcons } from './lib/icons'
+import { registerIcons } from './helper/icons'
 
 import './assets/styles/tokens.css'
 import './assets/styles/base.css'

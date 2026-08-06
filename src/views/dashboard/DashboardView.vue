@@ -4,12 +4,12 @@ import { storeToRefs } from 'pinia'
 import { useCategoryStore } from '@/stores/category'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
-import SubscriptionCard from '@/components/SubscriptionCard.vue'
-import SubscriptionDetailDialog from '@/components/SubscriptionDetailDialog.vue'
-import SubscriptionFormDialog from '@/components/SubscriptionFormDialog.vue'
+import SubscriptionCard from '@/components/subscription/SubscriptionCard.vue'
+import SubscriptionDetailDialog from '@/components/subscription/SubscriptionDetailDialog.vue'
+import SubscriptionFormDialog from '@/components/subscription/SubscriptionFormDialog.vue'
 import ConfirmDialog from '@/components/base/dialog/ConfirmDialog.vue'
 import EmptyState from '@/components/base/display/EmptyState.vue'
-import type { Subscription, SubscriptionInput } from '@/types'
+import type { Subscription, SubscriptionInput } from '@exp-track/shared'
 
 const categoryStore = useCategoryStore()
 const subscriptionStore = useSubscriptionStore()

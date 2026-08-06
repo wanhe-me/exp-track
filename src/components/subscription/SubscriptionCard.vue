@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Subscription } from '@/types'
-import { QUOTA_CYCLE_LABELS } from '@/types'
+import { QUOTA_CYCLE_LABELS, type Subscription } from '@exp-track/shared'
 import { remainingDaysLabel } from '@/utils/date'
-import StatusBadge from './base/display/StatusBadge.vue'
-import CategoryTag from './base/display/CategoryTag.vue'
+import StatusBadge from '@/components/base/display/StatusBadge.vue'
+import CategoryTag from '@/components/base/display/CategoryTag.vue'
 
 const props = defineProps<{
   subscription: Subscription

@@ -3,10 +3,10 @@ import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
-import SubscriptionCard from '@/components/SubscriptionCard.vue'
-import SubscriptionDetailDialog from '@/components/SubscriptionDetailDialog.vue'
+import SubscriptionCard from '@/components/subscription/SubscriptionCard.vue'
+import SubscriptionDetailDialog from '@/components/subscription/SubscriptionDetailDialog.vue'
 import EmptyState from '@/components/base/display/EmptyState.vue'
-import type { Subscription } from '@/types'
+import type { Subscription } from '@exp-track/shared'
 
 const subscriptionStore = useSubscriptionStore()
 const { subscriptions, loading } = storeToRefs(subscriptionStore)

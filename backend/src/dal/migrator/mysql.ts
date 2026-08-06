@@ -10,7 +10,7 @@
 //   5) 不引入第三方迁移库，0 额外依赖（mysql2 已在 backend/package.json）
 
 import type { Pool, PoolConnection, RowDataPacket } from 'mysql2/promise'
-import { logger } from '../../utils/logger.js'
+import { logger } from '../../helper/logger.js'
 import { config } from '../../config/index.js'
 import type { MigrationEntry } from '../migrations/manifest.js'
 

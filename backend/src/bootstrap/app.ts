@@ -2,7 +2,7 @@ import express, { type Express } from 'express'
 import cors from 'cors'
 import { errorHandler } from '../middlewares/error-handler.js'
 import { apiRouter } from '../http/router.js'
-import { ok, fail } from '../utils/response.js'
+import { ok, fail } from '../helper/response.js'
 
 export const createApp = (): Express => {
   const app = express()

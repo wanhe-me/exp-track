@@ -1,7 +1,7 @@
 import type { ErrorRequestHandler } from 'express'
 import { ZodError } from 'zod'
-import { fail } from '../utils/response.js'
-import { logger } from '../utils/logger.js'
+import { fail } from '../helper/response.js'
+import { logger } from '../helper/logger.js'
 import { DomainError } from '../types/errors.js'
 
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {

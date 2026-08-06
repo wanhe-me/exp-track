@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SubscriptionStatus } from '@/types'
+import type { SubscriptionStatus } from '@exp-track/shared'
 import { statusLabel } from '@/utils/status'
 
 const props = defineProps<{

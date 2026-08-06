@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useCategoryStore } from '@/stores/category'
 import ConfirmDialog from '@/components/base/dialog/ConfirmDialog.vue'
 import EmptyState from '@/components/base/display/EmptyState.vue'
-import type { Category } from '@/types'
+import type { Category } from '@exp-track/shared'
 
 const categoryStore = useCategoryStore()
 const { categories, loading } = storeToRefs(categoryStore)

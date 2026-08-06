@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { useSubscriptionStore } from '@/stores/subscription'
-import type { Subscription, SubscriptionInput } from '@/types'
-import type { SubscriptionView } from '@/types'
+import type { Subscription, SubscriptionInput, SubscriptionView } from '@exp-track/shared'
 
 export const useSubscriptionActions = (view: SubscriptionView) => {
   const store = useSubscriptionStore()

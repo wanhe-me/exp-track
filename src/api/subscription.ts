@@ -1,5 +1,5 @@
-import { api, unwrap, type ApiEnvelope } from '@/lib/api'
-import type { PaginatedResult, Subscription, SubscriptionInput, SubscriptionView } from '@/types'
+import { api, unwrap, type ApiEnvelope } from '@/helper/api'
+import type { PaginatedResult, Subscription, SubscriptionInput, SubscriptionView } from '@exp-track/shared'
 
 export const subscriptionApi = {
   list: async (params?: {

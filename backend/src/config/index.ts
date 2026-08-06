@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import './timezone.js'
+import type { DomainConfig } from '@exp-track/shared'
 
 const required = (name: string, fallback?: string): string => {
   const value = process.env[name] ?? fallback
@@ -24,8 +25,8 @@ export type DbDriver = 'sqlite' | 'mysql'
 const dbDriver: DbDriver =
   process.env.DB_TYPE === 'mysql' ? 'mysql' : 'sqlite'
 
-// 领域配置（PRD 第 5 章），前后端各一份且保持一致
-export const domainConfig = {
+// 领域配置（PRD 第 5 章）：结构类型与默认值由 @exp-track/shared 提供，env 在此覆盖。
+export const domainConfig: DomainConfig = {
   statusThresholds: {
     soon7: intEnv('SOON7_THRESHOLD', 7),
     soon30: intEnv('SOON30_THRESHOLD', 30),
@@ -39,7 +40,7 @@ export const domainConfig = {
   quotaPack: {
     archiveGraceDays: intEnv('QUOTA_PACK_ARCHIVE_GRACE_DAYS', 7),
   },
-} as const
+}
 
 export const config = {
   env: process.env.NODE_ENV ?? 'development',

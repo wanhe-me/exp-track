@@ -1,5 +1,5 @@
-import { api, unwrap, type ApiEnvelope } from '@/lib/api'
-import type { Category } from '@/types'
+import { api, unwrap, type ApiEnvelope } from '@/helper/api'
+import type { Category } from '@exp-track/shared'
 
 export const categoryApi = {
   list: async (): Promise<Category[]> => {

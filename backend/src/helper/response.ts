@@ -1,20 +1,9 @@
 import type { Response } from 'express'
+import type { ApiFailure, ApiSuccess } from '@exp-track/shared'
 
-export interface ApiSuccess<T> {
-  ok: true
-  data: T
-}
-
-export interface ApiFailure {
-  ok: false
-  error: {
-    code: string
-    message: string
-    details?: unknown
-  }
-}
-
-export type ApiResponse<T> = ApiSuccess<T> | ApiFailure
+// 响应信封契约（ApiSuccess / ApiFailure / ApiResponse）由 @exp-track/shared 单一来源；
+// 此处仅保留与 express 耦合的 ok/fail 封装。
+export type { ApiResponse } from '@exp-track/shared'
 
 export const ok = <T>(res: Response, data: T, status = 200): Response => {
   const payload: ApiSuccess<T> = { ok: true, data }

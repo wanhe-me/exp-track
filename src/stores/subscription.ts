@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { subscriptionApi } from '@/api/subscription'
-import type { Subscription, SubscriptionInput, SubscriptionView } from '@/types'
-import { domainConfig } from '@/types'
+import { domainConfig, type Subscription, type SubscriptionInput, type SubscriptionView } from '@exp-track/shared'
 
 export const useSubscriptionStore = defineStore('subscription', () => {
   const subscriptions = ref<Subscription[]>([])

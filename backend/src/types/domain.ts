@@ -1,20 +1,14 @@
-// 领域类型：与数据库驱动、配置加载无关的纯业务类型（PRD 第 4 章）。
-// 从 config/index.ts 与 dal/types.ts 抽离，统一归口到类型层，
-// 业务代码统一从本文件引入领域类型，避免类型散落与职责耦合。
+// 后端 DAL 行类型（snake -> camel 转换后的 TS 形态）+ 分类 Input。
+// 跨端共享的契约类型（枚举 / DTO / SubscriptionInput / QuotaPackInput /
+// SubscriptionFilter / QuotaPackFilter / PaginatedResult）已迁至 @exp-track/shared，
+// 本文件只保留后端 DAL 内部使用的行类型与分类输入。
 
-export type BillingCycle = 'month' | 'quarter' | 'year'
+import type {
+  BillingCycle,
+  QuotaCycle,
+  SubscriptionType,
+} from '@exp-track/shared'
 
-export type SubscriptionView = 'active' | 'archived' | 'deleted'
-
-export type SubscriptionStatus = 'expired' | 'soon7' | 'soon30' | 'sufficient'
-
-// 订阅类型：standard 标准/功能解锁型（只看到期时间）/ quota 额度型（大模型 API 周月限额等）
-export type SubscriptionType = 'standard' | 'quota'
-
-// 额度周期标签：week 周 / month 月（纯展示，不自动重置）
-export type QuotaCycle = 'week' | 'month'
-
-// 行类型（DAL 返回，已转为 camelCase 与原生 TS 类型）
 export interface CategoryRow {
   id: number
   name: string
@@ -44,6 +38,10 @@ export interface SubscriptionRow {
   updatedAt: string
 }
 
+export interface SubscriptionWithCategoryRow extends SubscriptionRow {
+  categoryName: string
+}
+
 export interface CreateCategoryInput {
   name: string
 }
@@ -52,50 +50,7 @@ export interface UpdateCategoryInput {
   name: string
 }
 
-export interface SubscriptionInput {
-  name: string
-  categoryId: number
-  price: number
-  billingCycle: BillingCycle
-  startDate: string
-  expireDate: string
-  autoRenew: boolean
-  note: string | null
-  subscriptionType: SubscriptionType
-  quotaCycle: QuotaCycle | null
-  quotaTotal: number | null
-  quotaUsed: number | null
-  quotaRemaining: number | null
-  quotaUnit: string | null
-}
-
-export type CreateSubscriptionInput = SubscriptionInput
-
-export type UpdateSubscriptionInput = SubscriptionInput
-
-export interface SubscriptionFilter {
-  view: SubscriptionView
-  categoryId?: number
-  search?: string
-  page?: number
-  pageSize?: number
-}
-
-export interface SubscriptionWithCategoryRow extends SubscriptionRow {
-  categoryName: string
-}
-
-export interface PaginatedResult<T> {
-  items: T[]
-  total: number
-  page: number
-  pageSize: number
-}
-
 // ---------------- quota_pack（额度包/补给包，FR-11 ~ FR-13）----------------
-
-// 额度包视图：与 SubscriptionView 同构（默认/已归档/已删除）
-export type QuotaPackView = 'active' | 'archived' | 'deleted'
 
 export interface QuotaPackRow {
   id: number
@@ -111,23 +66,4 @@ export interface QuotaPackRow {
   deletedAt: string | null
   createdAt: string
   updatedAt: string
-}
-
-// 创建/更新 body 字段（subscriptionId 来自 URL，不在 input 内）
-export interface QuotaPackInput {
-  name: string
-  quantity: number
-  unit: string
-  obtainedDate: string
-  expireDate: string
-  source: string | null
-  note: string | null
-}
-
-export type CreateQuotaPackInput = QuotaPackInput
-export type UpdateQuotaPackInput = QuotaPackInput
-
-export interface QuotaPackFilter {
-  view: QuotaPackView
-  subscriptionId: number
 }

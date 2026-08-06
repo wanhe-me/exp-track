@@ -2,7 +2,8 @@ import { z } from 'zod'
 import { config } from '../../config/index.js'
 import { getDb } from '../../dal/index.js'
 import { DomainError } from '../../types/errors.js'
-import type { QuotaPackRow, QuotaPackView, SubscriptionStatus } from '../../types/domain.js'
+import type { QuotaPack, QuotaPackView } from '@exp-track/shared'
+import type { QuotaPackRow } from '../../types/domain.js'
 import {
   calcRemainingDays,
   calcStatus,
@@ -39,24 +40,7 @@ export const quotaPackSchema = z.object({
   note: z.string().max(500, { message: '备注长度不能超过 500' }).nullable().optional(),
 })
 
-export interface QuotaPackDto {
-  id: number
-  subscriptionId: number
-  name: string
-  quantity: number
-  unit: string
-  obtainedDate: string
-  expireDate: string
-  source: string | null
-  note: string | null
-  archived: boolean
-  deletedAt: string | null
-  createdAt: string
-  updatedAt: string
-  // 基于失效日期的剩余天数与四档状态（复用主订阅阈值，FR-12）
-  remainingDays: number
-  status: SubscriptionStatus
-}
+export type QuotaPackDto = QuotaPack
 
 // 卡片槽位 DTO（FR-12）：最近一个快到期的 + 未删除未归档总数
 export interface QuotaPackSlotDto {

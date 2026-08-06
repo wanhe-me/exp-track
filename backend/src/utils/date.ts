@@ -1,5 +1,5 @@
 import { config } from '../config/index.js'
-import type { SubscriptionStatus } from '../types/domain.js'
+import type { SubscriptionStatus } from '@exp-track/shared'
 
 // 计算剩余天数：到期日期 − 今天（按整天取整，不含时分）
 // 输入日期格式 YYYY-MM-DD

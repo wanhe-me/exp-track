@@ -1,8 +1,17 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useCategoryStore } from '@/stores/category'
-import type { BillingCycle, QuotaCycle, Subscription, SubscriptionInput, SubscriptionType } from '@/types'
-import { BILLING_CYCLE_LABELS, QUOTA_CYCLE_LABELS, SUBSCRIPTION_TYPE_LABELS, domainConfig } from '@/types'
+import {
+  BILLING_CYCLE_LABELS,
+  QUOTA_CYCLE_LABELS,
+  SUBSCRIPTION_TYPE_LABELS,
+  domainConfig,
+  type BillingCycle,
+  type QuotaCycle,
+  type Subscription,
+  type SubscriptionInput,
+  type SubscriptionType,
+} from '@exp-track/shared'
 import { todayStr } from '@/utils/date'
 import { DatePicker } from '@/components/base'
 

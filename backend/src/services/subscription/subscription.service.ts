@@ -2,15 +2,14 @@ import { z } from 'zod'
 import { getDb } from '../../dal/index.js'
 import { DomainError } from '../../types/errors.js'
 import type {
-  BillingCycle,
   PaginatedResult,
   QuotaCycle,
+  Subscription,
   SubscriptionFilter,
-  SubscriptionStatus,
   SubscriptionType,
   SubscriptionView,
-  SubscriptionWithCategoryRow,
-} from '../../types/domain.js'
+} from '@exp-track/shared'
+import type { SubscriptionWithCategoryRow } from '../../types/domain.js'
 import {
   calcRemainingDays,
   calcStatus,
@@ -60,30 +59,7 @@ export const subscriptionSchema = z.object({
   quotaUnit: z.string().max(20, { message: '单位长度不能超过 20' }).nullable().optional(),
 })
 
-export interface SubscriptionDto {
-  id: number
-  name: string
-  categoryId: number
-  categoryName: string
-  price: number
-  billingCycle: BillingCycle
-  startDate: string
-  expireDate: string
-  autoRenew: boolean
-  note: string | null
-  subscriptionType: SubscriptionType
-  quotaCycle: QuotaCycle | null
-  quotaTotal: number | null
-  quotaUsed: number | null
-  quotaRemaining: number | null
-  quotaUnit: string | null
-  archived: boolean
-  deletedAt: string | null
-  createdAt: string
-  updatedAt: string
-  remainingDays: number
-  status: SubscriptionStatus
-}
+export type SubscriptionDto = Subscription
 
 const buildDto = (row: SubscriptionWithCategoryRow): SubscriptionDto => {
   const remainingDays = calcRemainingDays(row.expireDate)

@@ -1,0 +1,9 @@
+packages:
+  - 'packages/*'
+  - 'backend'
+
+# pnpm v11 用 allowBuilds（包名 -> bool）显式批准可执行构建脚本的依赖。
+# v10 的 onlyBuiltDependencies / neverBuiltDependencies 字段在 v11 已废弃、不再被识别。
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true

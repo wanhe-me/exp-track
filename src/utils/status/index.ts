@@ -1,5 +1,4 @@
-import type { SubscriptionStatus } from '@/types'
-import { STATUS_LABELS } from '@/types'
+import { STATUS_LABELS, type SubscriptionStatus } from '@exp-track/shared'
 
 // 状态 → 文案
 export const statusLabel = (status: SubscriptionStatus): string => STATUS_LABELS[status]

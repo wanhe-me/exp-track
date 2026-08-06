@@ -10,7 +10,7 @@
 //   5) 不引入第三方迁移库，0 额外依赖
 
 import type Database from 'better-sqlite3'
-import { logger } from '../../utils/logger.js'
+import { logger } from '../../helper/logger.js'
 import type { MigrationEntry } from '../migrations/manifest.js'
 
 const MIGRATIONS_TABLE = '_migrations'

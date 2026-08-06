@@ -1,6 +1,6 @@
 import { createApp } from './app.js'
 import { config } from '../config/index.js'
-import { logger } from '../utils/logger.js'
+import { logger } from '../helper/logger.js'
 import { closeDb, initDb } from '../dal/index.js'
 
 const app = createApp()

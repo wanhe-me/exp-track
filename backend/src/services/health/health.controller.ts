@@ -1,6 +1,6 @@
 import { Router } from 'express'
-import { ok } from '../../utils/response.js'
-import { asyncHandler } from '../../utils/async-handler.js'
+import { ok } from '../../helper/response.js'
+import { asyncHandler } from '../../helper/async-handler.js'
 import { getHealthReport } from './health.service.js'
 
 export const healthRouter: Router = Router()

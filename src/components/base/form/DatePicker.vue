@@ -20,7 +20,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import dayjs from 'dayjs'
-import { domainConfig } from '@/types'
+import { domainConfig } from '@exp-track/shared'
 import type { DisabledDateRange, DatePickerSize } from './types'
 
 interface DayCell {

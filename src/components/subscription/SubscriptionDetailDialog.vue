@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Subscription, SubscriptionView } from '@/types'
-import { BILLING_CYCLE_LABELS, QUOTA_CYCLE_LABELS, domainConfig } from '@/types'
+import { BILLING_CYCLE_LABELS, QUOTA_CYCLE_LABELS, domainConfig, type Subscription, type SubscriptionView } from '@exp-track/shared'
 import { formatDate, remainingDaysLabel } from '@/utils/date'
-import StatusBadge from './base/display/StatusBadge.vue'
-import CategoryTag from './base/display/CategoryTag.vue'
+import StatusBadge from '@/components/base/display/StatusBadge.vue'
+import CategoryTag from '@/components/base/display/CategoryTag.vue'
 
 const props = defineProps<{
   modelValue: boolean
