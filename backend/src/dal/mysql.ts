@@ -7,10 +7,14 @@ import { runMySqlMigrations } from './migrator/mysql.js'
 import type {
   CategoryRow,
   CreateCategoryInput,
+  CreateQuotaPackInput,
   CreateSubscriptionInput,
+  QuotaPackFilter,
+  QuotaPackRow,
   SubscriptionFilter,
   SubscriptionWithCategoryRow,
   UpdateCategoryInput,
+  UpdateQuotaPackInput,
   UpdateSubscriptionInput,
 } from '../types/domain.js'
 
@@ -61,6 +65,22 @@ const mapSubscriptionWithCategory = (row: MysqlRow): SubscriptionWithCategoryRow
   createdAt: String(row.created_at),
   updatedAt: String(row.updated_at),
   categoryName: row.category_name === null ? '' : String(row.category_name),
+})
+
+const mapQuotaPack = (row: MysqlRow): QuotaPackRow => ({
+  id: Number(row.id),
+  subscriptionId: Number(row.subscription_id),
+  name: String(row.name),
+  quantity: Number(row.quantity),
+  unit: String(row.unit),
+  obtainedDate: String(row.obtained_date),
+  expireDate: String(row.expire_date),
+  source: row.source === null ? null : String(row.source),
+  note: row.note === null ? null : String(row.note),
+  archived: Number(row.archived) === 1,
+  deletedAt: row.deleted_at === null ? null : String(row.deleted_at),
+  createdAt: String(row.created_at),
+  updatedAt: String(row.updated_at),
 })
 
 const SUBSCRIPTION_JOIN_SQL = `
@@ -294,5 +314,132 @@ export class MySqlAdapter implements DbAdapter {
       [archived ? 1 : 0, id],
     )
     return this.getSubscriptionById(id)
+  }
+
+  // ---------------- quota_pack ----------------
+
+  private buildQuotaPackClause(filter: QuotaPackFilter): { where: string; params: unknown[] } {
+    const conditions: string[] = ['subscription_id = ?']
+    const params: unknown[] = [filter.subscriptionId]
+    if (filter.view === 'active') {
+      conditions.push('deleted_at IS NULL AND archived = 0')
+    } else if (filter.view === 'archived') {
+      conditions.push('deleted_at IS NULL AND archived = 1')
+    } else {
+      conditions.push('deleted_at IS NOT NULL')
+    }
+    return { where: conditions.join(' AND '), params }
+  }
+
+  async listQuotaPacks(filter: QuotaPackFilter): Promise<QuotaPackRow[]> {
+    const { where, params } = this.buildQuotaPackClause(filter)
+    const [rows] = await this.conn().query<MysqlRow[]>(
+      `SELECT * FROM quota_pack WHERE ${where} ORDER BY expire_date ASC`,
+      params,
+    )
+    return rows.map(mapQuotaPack)
+  }
+
+  async countQuotaPacks(filter: QuotaPackFilter): Promise<number> {
+    const { where, params } = this.buildQuotaPackClause(filter)
+    const [rows] = await this.conn().query<MysqlRow[]>(
+      `SELECT COUNT(*) AS cnt FROM quota_pack WHERE ${where}`,
+      params,
+    )
+    return Number(rows[0]?.cnt ?? 0)
+  }
+
+  async getQuotaPackById(id: number): Promise<QuotaPackRow | null> {
+    const [rows] = await this.conn().query<MysqlRow[]>(
+      'SELECT * FROM quota_pack WHERE id = ?',
+      [id],
+    )
+    return rows[0] ? mapQuotaPack(rows[0]) : null
+  }
+
+  async getNearestExpiringQuotaPack(subscriptionId: number): Promise<QuotaPackRow | null> {
+    // 卡片槽位：未删除未归档额度包中 expire_date 升序首条（含已过期项，FR-12）
+    const [rows] = await this.conn().query<MysqlRow[]>(
+      `SELECT * FROM quota_pack
+        WHERE subscription_id = ? AND deleted_at IS NULL AND archived = 0
+        ORDER BY expire_date ASC LIMIT 1`,
+      [subscriptionId],
+    )
+    return rows[0] ? mapQuotaPack(rows[0]) : null
+  }
+
+  async createQuotaPack(subscriptionId: number, input: CreateQuotaPackInput): Promise<QuotaPackRow> {
+    const [result] = await this.conn().query<ResultSetHeader>(
+      `INSERT INTO quota_pack
+         (subscription_id, name, quantity, unit, obtained_date, expire_date, source, note)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        subscriptionId,
+        input.name,
+        input.quantity,
+        input.unit,
+        input.obtainedDate,
+        input.expireDate,
+        input.source,
+        input.note,
+      ],
+    )
+    const row = await this.getQuotaPackById(result.insertId)
+    if (!row) throw new Error('[mysql] quota_pack row missing immediately after insert')
+    return row
+  }
+
+  async updateQuotaPack(id: number, input: UpdateQuotaPackInput): Promise<QuotaPackRow | null> {
+    await this.conn().query(
+      `UPDATE quota_pack SET
+         name = ?, quantity = ?, unit = ?, obtained_date = ?, expire_date = ?,
+         source = ?, note = ?, updated_at = NOW()
+       WHERE id = ?`,
+      [
+        input.name,
+        input.quantity,
+        input.unit,
+        input.obtainedDate,
+        input.expireDate,
+        input.source,
+        input.note,
+        id,
+      ],
+    )
+    return this.getQuotaPackById(id)
+  }
+
+  async softDeleteQuotaPack(id: number): Promise<void> {
+    await this.conn().query(
+      'UPDATE quota_pack SET deleted_at = NOW(), updated_at = NOW() WHERE id = ?',
+      [id],
+    )
+  }
+
+  async restoreQuotaPack(id: number): Promise<QuotaPackRow | null> {
+    await this.conn().query(
+      'UPDATE quota_pack SET deleted_at = NULL, updated_at = NOW() WHERE id = ?',
+      [id],
+    )
+    return this.getQuotaPackById(id)
+  }
+
+  async setQuotaPackArchived(id: number, archived: boolean): Promise<QuotaPackRow | null> {
+    await this.conn().query(
+      'UPDATE quota_pack SET archived = ?, updated_at = NOW() WHERE id = ?',
+      [archived ? 1 : 0, id],
+    )
+    return this.getQuotaPackById(id)
+  }
+
+  async archiveExpiredQuotaPacks(subscriptionId: number, graceDays: number): Promise<number> {
+    // 惰性归档：失效超过宽限期（expire_date < 今天 − graceDays）的未归档额度包置 archived=1（FR-13）
+    const [result] = await this.conn().query<ResultSetHeader>(
+      `UPDATE quota_pack SET archived = 1, updated_at = NOW()
+        WHERE subscription_id = ? AND deleted_at IS NULL AND archived = 0
+          AND expire_date < DATE_SUB(CURDATE(), INTERVAL ? DAY)`,
+      [subscriptionId, graceDays],
+    )
+    return result.affectedRows
   }
 }

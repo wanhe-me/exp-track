@@ -4,13 +4,18 @@ import { logger } from '../utils/logger.js'
 import type { DbAdapter } from './types.js'
 import { manifestSqlite as manifest } from './migrations/manifest.js'
 import { runSqliteMigrations } from './migrator/sqlite.js'
+import { DomainError } from '../types/errors.js'
 import type {
   CategoryRow,
   CreateCategoryInput,
+  CreateQuotaPackInput,
   CreateSubscriptionInput,
+  QuotaPackFilter,
+  QuotaPackRow,
   SubscriptionFilter,
   SubscriptionWithCategoryRow,
   UpdateCategoryInput,
+  UpdateQuotaPackInput,
   UpdateSubscriptionInput,
 } from '../types/domain.js'
 
@@ -261,5 +266,57 @@ export class SqliteAdapter implements DbAdapter {
       .prepare("UPDATE subscription SET archived = ?, updated_at = datetime('now') WHERE id = ?")
       .run(archived ? 1 : 0, id)
     return this.getSubscriptionById(id)
+  }
+
+  // ---------------- quota_pack ----------------
+  // SQLite 部署模式暂不支持额度包功能（待同步 SQLite 迁移与实现后启用）。
+  // 调用即抛错，符合 CLAUDE.md「SQLite 部署模式期间不可用」约定。
+
+  private sqliteQuotaPackUnsupported(): never {
+    throw new DomainError(
+      'SQLITE_QUOTA_PACK_UNSUPPORTED',
+      '额度包功能暂未在 SQLite 部署模式实现，请使用 MySQL 部署模式',
+      501,
+    )
+  }
+
+  async listQuotaPacks(_filter: QuotaPackFilter): Promise<QuotaPackRow[]> {
+    this.sqliteQuotaPackUnsupported()
+  }
+
+  async countQuotaPacks(_filter: QuotaPackFilter): Promise<number> {
+    this.sqliteQuotaPackUnsupported()
+  }
+
+  async getQuotaPackById(_id: number): Promise<QuotaPackRow | null> {
+    this.sqliteQuotaPackUnsupported()
+  }
+
+  async getNearestExpiringQuotaPack(_subscriptionId: number): Promise<QuotaPackRow | null> {
+    this.sqliteQuotaPackUnsupported()
+  }
+
+  async createQuotaPack(_subscriptionId: number, _input: CreateQuotaPackInput): Promise<QuotaPackRow> {
+    this.sqliteQuotaPackUnsupported()
+  }
+
+  async updateQuotaPack(_id: number, _input: UpdateQuotaPackInput): Promise<QuotaPackRow | null> {
+    this.sqliteQuotaPackUnsupported()
+  }
+
+  async softDeleteQuotaPack(_id: number): Promise<void> {
+    this.sqliteQuotaPackUnsupported()
+  }
+
+  async restoreQuotaPack(_id: number): Promise<QuotaPackRow | null> {
+    this.sqliteQuotaPackUnsupported()
+  }
+
+  async setQuotaPackArchived(_id: number, _archived: boolean): Promise<QuotaPackRow | null> {
+    this.sqliteQuotaPackUnsupported()
+  }
+
+  async archiveExpiredQuotaPacks(_subscriptionId: number, _graceDays: number): Promise<number> {
+    this.sqliteQuotaPackUnsupported()
   }
 }

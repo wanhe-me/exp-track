@@ -91,3 +91,43 @@ export interface PaginatedResult<T> {
   page: number
   pageSize: number
 }
+
+// ---------------- quota_pack（额度包/补给包，FR-11 ~ FR-13）----------------
+
+// 额度包视图：与 SubscriptionView 同构（默认/已归档/已删除）
+export type QuotaPackView = 'active' | 'archived' | 'deleted'
+
+export interface QuotaPackRow {
+  id: number
+  subscriptionId: number
+  name: string
+  quantity: number
+  unit: string
+  obtainedDate: string
+  expireDate: string
+  source: string | null
+  note: string | null
+  archived: boolean
+  deletedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+// 创建/更新 body 字段（subscriptionId 来自 URL，不在 input 内）
+export interface QuotaPackInput {
+  name: string
+  quantity: number
+  unit: string
+  obtainedDate: string
+  expireDate: string
+  source: string | null
+  note: string | null
+}
+
+export type CreateQuotaPackInput = QuotaPackInput
+export type UpdateQuotaPackInput = QuotaPackInput
+
+export interface QuotaPackFilter {
+  view: QuotaPackView
+  subscriptionId: number
+}

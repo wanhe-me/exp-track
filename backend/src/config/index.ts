@@ -35,6 +35,10 @@ export const domainConfig = {
   },
   dateFormat: 'YYYY-MM-DD',
   currencySymbol: '¥',
+  // 额度包失效后自动归档的宽限期（天）：宽限内仍展示并标红，超过后惰性置 archived=true（FR-13）
+  quotaPack: {
+    archiveGraceDays: intEnv('QUOTA_PACK_ARCHIVE_GRACE_DAYS', 7),
+  },
 } as const
 
 export const config = {

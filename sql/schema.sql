@@ -79,3 +79,42 @@ CREATE TABLE IF NOT EXISTS subscription (
   KEY idx_subscription_deleted_at (deleted_at),
   CONSTRAINT fk_subscription_category FOREIGN KEY (category_id) REFERENCES category (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订阅记录表：记录每项订阅的基本信息与到期时间，支持软删除与归档';
+
+
+-- -----------------------------------------------------------------------------
+-- 表：quota_pack（额度包/补给包）
+--   - 附属于 subscription 的独立失效额度（首充赠送 / 活动补偿 / 购买叠加等）
+--   - 有独立于主订阅续费周期的失效时间，解决「主订阅到期日 ≠ 额度包失效日」
+--     导致倒计时遗漏的痛点（FR-11 ~ FR-13）
+--   - expire_date 是剩余天数 / 状态计算的权威字段（复用主订阅四档阈值 FR-06）
+--   - 字段校验（FR-11）：名称 ≤100 非空；数量非负 2 位小数；单位 ≤32 非空；
+--     失效日期 ≥ 获得日期；软删除置 deleted_at；归档 archived
+--   - 卡片槽位展示（FR-12）：取该订阅下未删除未归档额度包中 expire_date 升序首条
+--   - 失效自动归档（FR-13）：失效超宽限期后惰性置 archived = 1（无定时任务）
+--
+-- 与 subscription 的级联关系（PRD §4.3）：
+--   - 主订阅软删除：额度包不级联软删除，随主订阅在默认视图隐藏；恢复主订阅则恢复可见
+--   - 主订阅归档：额度包随主订阅在已归档视图展示，不影响额度包自身 archived 字段
+--   - 主订阅物理删除：本版本无物理删除，故外键不加 ON DELETE（默认 RESTRICT）
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS quota_pack (
+  id              BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT COMMENT '主键，自增',
+  subscription_id BIGINT UNSIGNED   NOT NULL                COMMENT '所属订阅 ID，关联 subscription(id)',
+  name            VARCHAR(100)      NOT NULL                COMMENT '额度包名称，最长 100 字符，非空',
+  quantity        DECIMAL(12, 2) UNSIGNED NOT NULL          COMMENT '数量，非负 2 位小数（token 数 / 次数 / 流量等通用数值）',
+  unit            VARCHAR(32)       NOT NULL                COMMENT '单位，如 万 tokens / 次 / GB',
+  obtained_date   DATE              NOT NULL                COMMENT '获得日期，格式 YYYY-MM-DD',
+  expire_date     DATE              NOT NULL                COMMENT '失效日期，格式 YYYY-MM-DD；需 ≥ obtained_date；倒计时依据',
+  source          VARCHAR(50)                 DEFAULT NULL  COMMENT '来源，如 首充赠送 / 活动补偿（可空）',
+  note            VARCHAR(500)                 DEFAULT NULL  COMMENT '备注，可空',
+  archived        TINYINT(1)        NOT NULL DEFAULT 0       COMMENT '是否已归档：0 否 / 1 是（失效超宽限期后惰性置 1，见 FR-13）',
+  deleted_at      DATETIME                      DEFAULT NULL  COMMENT '软删除时间，NULL 表示未删除',
+  created_at      DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at      DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (id),
+  KEY idx_quotapack_subscription_id (subscription_id),
+  KEY idx_quotapack_expire_date (expire_date),
+  KEY idx_quotapack_archived (archived),
+  KEY idx_quotapack_deleted_at (deleted_at),
+  CONSTRAINT fk_quotapack_subscription FOREIGN KEY (subscription_id) REFERENCES subscription (id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '额度包/补给包表：附属于订阅的独立失效额度，支持软删除与归档（FR-11 ~ FR-13）';

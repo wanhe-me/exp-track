@@ -62,4 +62,5 @@ export const manifestSqlite: MigrationEntry[] = [
 export const manifestMysql: MigrationEntry[] = [
   loadMysql('001_init'),
   loadMysql('002_quota'),
+  loadMysql('003_quota_pack'),
 ]
