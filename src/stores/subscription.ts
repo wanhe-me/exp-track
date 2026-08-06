@@ -1,24 +1,30 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { subscriptionApi } from '@/api/subscription'
-import type { Subscription, SubscriptionInput, SubscriptionView } from '@/types'
-import { domainConfig } from '@/types'
+import { domainConfig, type Subscription, type SubscriptionInput, type SubscriptionView } from '@exp-track/shared'
 
 export const useSubscriptionStore = defineStore('subscription', () => {
   const subscriptions = ref<Subscription[]>([])
+  const total = ref(0)
   const loading = ref(false)
   const currentView = ref<SubscriptionView>('active')
   const filterCategoryId = ref<number | undefined>(undefined)
   const searchKeyword = ref('')
+  const sortBy = ref<'expireDate' | 'createdAt'>('expireDate')
+  const sortOrder = ref<'asc' | 'desc'>('asc')
 
   const fetchAll = async (): Promise<void> => {
     loading.value = true
     try {
-      subscriptions.value = await subscriptionApi.list({
+      const result = await subscriptionApi.list({
         view: currentView.value,
         categoryId: filterCategoryId.value,
         search: searchKeyword.value.trim() || undefined,
+        sortBy: sortBy.value,
+        sortOrder: sortOrder.value,
       })
+      subscriptions.value = result.items
+      total.value = result.total
     } finally {
       loading.value = false
     }
@@ -72,10 +78,13 @@ export const useSubscriptionStore = defineStore('subscription', () => {
 
   return {
     subscriptions,
+    total,
     loading,
     currentView,
     filterCategoryId,
     searchKeyword,
+    sortBy,
+    sortOrder,
     fetchAll,
     setView,
     create,

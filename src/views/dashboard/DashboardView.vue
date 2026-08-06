@@ -1,58 +1,50 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import { useCategoryStore } from '@/stores/category'
 import { useSubscriptionStore } from '@/stores/subscription'
-import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
-import SubscriptionCard from '@/components/SubscriptionCard.vue'
-import SubscriptionFormDialog from '@/components/SubscriptionFormDialog.vue'
-import ConfirmDialog from '@/components/base/ConfirmDialog.vue'
-import EmptyState from '@/components/base/EmptyState.vue'
-import type { SubscriptionInput } from '@/types'
+import { useQuotaPackStore } from '@/stores/quotaPack'
+import SubscriptionCard from '@/components/subscription/SubscriptionCard.vue'
+import SubscriptionDetailDialog from '@/components/subscription/SubscriptionDetailDialog.vue'
+import EmptyState from '@/components/base/display/EmptyState.vue'
+import type { Subscription } from '@exp-track/shared'
 
+const router = useRouter()
 const categoryStore = useCategoryStore()
 const subscriptionStore = useSubscriptionStore()
-const { subscriptions, loading, filterCategoryId, searchKeyword } = storeToRefs(subscriptionStore)
+const quotaPackStore = useQuotaPackStore()
+const { subscriptions, loading } = storeToRefs(subscriptionStore)
 
-const actions = useSubscriptionActions('active')
+const detailVisible = ref(false)
+const detailTarget = ref<Subscription | null>(null)
+
+const openDetail = (sub: Subscription): void => {
+  detailTarget.value = sub
+  detailVisible.value = true
+}
+
+// 从详情跳转到订阅管理（数据维护集中在管理页）
+const goToManagement = (): void => {
+  detailVisible.value = false
+  void router.push('/management')
+}
 
 onMounted(async () => {
   await Promise.all([categoryStore.fetchAll(), subscriptionStore.setView('active')])
+  // 看板加载后并发拉取每个订阅的额度包槽位（FR-12 卡片展示）
+  const ids = subscriptions.value.map((s) => s.id)
+  if (ids.length > 0) {
+    void quotaPackStore.fetchSlots(ids)
+  }
 })
-
-const onSubmit = async (input: SubscriptionInput, id: number | null): Promise<void> => {
-  await actions.handleSubmit(input, id)
-}
-
-const onSearch = (): void => {
-  void subscriptionStore.fetchAll()
-}
 </script>
 
 <template>
   <div class="dashboard">
     <div class="page-header">
-      <div>
-        <h1 class="page-title">到期看板</h1>
-        <p class="page-desc">按剩余天数升序排列，临期与已过期项突出展示</p>
-      </div>
-      <button class="btn btn-primary" @click="actions.openCreate">+ 添加订阅</button>
-    </div>
-
-    <div class="toolbar">
-      <input
-        v-model="searchKeyword"
-        class="input search-input"
-        placeholder="搜索订阅名称..."
-        @keyup.enter="onSearch"
-      />
-      <select v-model.number="filterCategoryId" class="select filter-select" @change="onSearch">
-        <option :value="undefined">全部分类</option>
-        <option v-for="c in categoryStore.categories" :key="c.id" :value="c.id">
-          {{ c.name }}
-        </option>
-      </select>
-      <button class="btn btn-sm" @click="onSearch">筛选</button>
+      <h1 class="page-title">到期看板</h1>
+      <p class="page-desc">集中查看订阅到期，临期自动提醒</p>
     </div>
 
     <div v-if="loading" class="loading-state">加载中...</div>
@@ -60,10 +52,10 @@ const onSearch = (): void => {
     <EmptyState
       v-else-if="subscriptions.length === 0"
       title="暂无订阅"
-      description="点击「添加订阅」开始管理你的到期提醒"
+      description="前往「订阅管理」添加你的第一项订阅"
     >
-      <button class="btn btn-primary" style="margin-top: 16px" @click="actions.openCreate">
-        添加订阅
+      <button class="btn btn-primary" style="margin-top: 1rem" @click="router.push('/management')">
+        去订阅管理
       </button>
     </EmptyState>
 
@@ -72,34 +64,16 @@ const onSearch = (): void => {
         v-for="sub in subscriptions"
         :key="sub.id"
         :subscription="sub"
-        view="active"
-        @edit="actions.openEdit"
-        @delete="actions.requestDelete"
-        @archive="actions.requestArchive"
+        @detail="openDetail"
       />
     </div>
 
-    <SubscriptionFormDialog
-      v-model="actions.formVisible.value"
-      :subscription="actions.editingSubscription.value"
-      @submit="onSubmit"
-    />
-
-    <ConfirmDialog
-      ref="actions.deleteDialog"
-      title="删除订阅"
-      :message="`确定要删除订阅「${actions.deleteTarget.value?.name}」吗？删除后可在回收站恢复。`"
-      confirm-text="删除"
-      danger
-      @confirm="actions.confirmDelete"
-    />
-
-    <ConfirmDialog
-      ref="actions.archiveDialog"
-      title="归档订阅"
-      :message="`确定要归档订阅「${actions.archiveTarget.value?.name}」吗？归档后可在已归档视图查看。`"
-      confirm-text="归档"
-      @confirm="actions.confirmArchive"
+    <SubscriptionDetailDialog
+      v-model="detailVisible"
+      :subscription="detailTarget"
+      view="active"
+      readonly
+      @go-management="goToManagement"
     />
   </div>
 </template>
@@ -113,44 +87,13 @@ const onSearch = (): void => {
 
 .page-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  align-items: center;
-}
-
-.search-input {
-  flex: 1;
-  min-width: 200px;
-  max-width: 320px;
-}
-
-.filter-select {
-  width: auto;
-  min-width: 160px;
-}
-
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-3);
-  }
-
-  .search-input,
-  .filter-select {
-    max-width: 100%;
-    width: 100%;
-  }
-
-  .toolbar .btn {
-    width: 100%;
-  }
+.page-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  margin: 0;
 }
 </style>

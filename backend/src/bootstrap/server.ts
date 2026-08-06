@@ -1,6 +1,6 @@
 import { createApp } from './app.js'
 import { config } from '../config/index.js'
-import { logger } from '../utils/logger.js'
+import { logger } from '../helper/logger.js'
 import { closeDb, initDb } from '../dal/index.js'
 
 const app = createApp()
@@ -8,7 +8,7 @@ const app = createApp()
 const start = async (): Promise<void> => {
   // 初始化数据库（建表）
   await initDb()
-  logger.info('database initialized', { driver: config.dbDriver })
+  logger.info('database initialized', { driver: 'mysql' })
 
   const server = app.listen(config.port, config.host, () => {
     logger.info('server started', {

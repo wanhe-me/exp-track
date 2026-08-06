@@ -1,4 +1,6 @@
+import 'dotenv/config'
 import './timezone.js'
+import type { DomainConfig } from '@exp-track/shared'
 
 const required = (name: string, fallback?: string): string => {
   const value = process.env[name] ?? fallback
@@ -18,15 +20,8 @@ const intEnv = (name: string, fallback: number): number => {
   return parsed
 }
 
-
-
-export type DbDriver = 'sqlite' | 'mysql'
-
-const dbDriver: DbDriver =
-  process.env.DB_TYPE === 'mysql' ? 'mysql' : 'sqlite'
-
-// 领域配置（PRD 第 5 章），前后端各一份且保持一致
-export const domainConfig = {
+// 领域配置（PRD 第 5 章）：结构类型与默认值由 @exp-track/shared 提供，env 在此覆盖。
+export const domainConfig: DomainConfig = {
   statusThresholds: {
     soon7: intEnv('SOON7_THRESHOLD', 7),
     soon30: intEnv('SOON30_THRESHOLD', 30),
@@ -36,17 +31,17 @@ export const domainConfig = {
   },
   dateFormat: 'YYYY-MM-DD',
   currencySymbol: '¥',
-} as const
+  // 额度包失效后自动归档的宽限期（天）：宽限内仍展示并标红，超过后惰性置 archived=true（FR-13）
+  quotaPack: {
+    archiveGraceDays: intEnv('QUOTA_PACK_ARCHIVE_GRACE_DAYS', 7),
+  },
+}
 
 export const config = {
   env: process.env.NODE_ENV ?? 'development',
   host: process.env.HOST ?? '127.0.0.1',
   port: intEnv('PORT', 15180),
-  corsOrigin: process.env.CORS_ORIGIN ?? 'http://127.0.0.1:15173',
-  dbDriver,
-  sqlite: {
-    path: process.env.SQLITE_PATH ?? './data/exp-track.db',
-  },
+  corsOrigin: process.env.CORS_ORIGIN?.split(',').map(s => s.trim()) ?? ['http://127.0.0.1:15173'],
   mysql: {
     host: process.env.MYSQL_HOST ?? '127.0.0.1',
     port: intEnv('MYSQL_PORT', 13306),

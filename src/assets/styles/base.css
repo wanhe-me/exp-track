@@ -14,6 +14,8 @@ body,
 
 html {
   color-scheme: light dark;
+  /* 缩放引擎：根字号 = 16px × --ui-scale，全站 rem 尺寸随其等比缩放 */
+  font-size: calc(16px * var(--ui-scale));
 }
 
 html[data-theme='light'] {
@@ -206,8 +208,8 @@ ol {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2386909c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 32px;
+  background-position: right 0.625rem center;
+  padding-right: 2rem;
 }
 
 [data-theme='dark'] .select {
@@ -216,7 +218,7 @@ ol {
 
 .textarea {
   resize: vertical;
-  min-height: 80px;
+  min-height: 5rem;
 }
 
 /* 表单标签 */
@@ -252,8 +254,8 @@ ol {
 }
 
 .checkbox-label input[type='checkbox'] {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   accent-color: var(--color-primary);
   cursor: pointer;
 }
@@ -284,13 +286,14 @@ ol {
   color: var(--color-text-tertiary);
 }
 
-/* 卡片网格 */
+/* 卡片网格（列宽随档位缩放，保证整体等比） */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--size-card-min), 1fr));
   gap: var(--space-4);
 }
 
+/* 断点保持 px：媒体查询不跟随根字号，避免缩放档位改变响应式行为 */
 @media (max-width: 768px) {
   .card-grid {
     grid-template-columns: 1fr;

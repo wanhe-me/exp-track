@@ -1,6 +1,7 @@
 import { Router } from 'express'
-import { ok } from '../../utils/response.js'
-import { DomainError } from '../../dal/types.js'
+import { ok } from '../../helper/response.js'
+import { asyncHandler } from '../../helper/async-handler.js'
+import { parseId } from '../../http/params.js'
 import {
   categorySchema,
   createCategory,
@@ -12,64 +13,30 @@ import {
 
 export const categoryRouter: Router = Router()
 
-// 获取分类列表
-categoryRouter.get('/', async (_req, res, next) => {
-  try {
-    const data = await listCategories()
-    return ok(res, data)
-  } catch (err) {
-    next(err)
-  }
-})
+categoryRouter.get('/', asyncHandler(async (_req, res) => {
+  const data = await listCategories()
+  return ok(res, data)
+}))
 
-// 获取单个分类
-categoryRouter.get('/:id', async (req, res, next) => {
-  try {
-    const id = Number(req.params.id)
-    if (!Number.isInteger(id) || id <= 0) {
-      throw new DomainError('INVALID_ID', '无效的分类 id', 400)
-    }
-    const data = await getCategoryById(id)
-    return ok(res, data)
-  } catch (err) {
-    next(err)
-  }
-})
+categoryRouter.get('/:id', asyncHandler(async (req, res) => {
+  const id = parseId(req.params.id)
+  const data = await getCategoryById(id)
+  return ok(res, data)
+}))
 
-// 创建分类
-categoryRouter.post('/', async (req, res, next) => {
-  try {
-    const data = await createCategory(categorySchema.parse(req.body))
-    return ok(res, data, 201)
-  } catch (err) {
-    next(err)
-  }
-})
+categoryRouter.post('/', asyncHandler(async (req, res) => {
+  const data = await createCategory(categorySchema.parse(req.body))
+  return ok(res, data, 201)
+}))
 
-// 更新分类
-categoryRouter.put('/:id', async (req, res, next) => {
-  try {
-    const id = Number(req.params.id)
-    if (!Number.isInteger(id) || id <= 0) {
-      throw new DomainError('INVALID_ID', '无效的分类 id', 400)
-    }
-    const data = await updateCategory(id, categorySchema.parse(req.body))
-    return ok(res, data)
-  } catch (err) {
-    next(err)
-  }
-})
+categoryRouter.put('/:id', asyncHandler(async (req, res) => {
+  const id = parseId(req.params.id)
+  const data = await updateCategory(id, categorySchema.parse(req.body))
+  return ok(res, data)
+}))
 
-// 删除分类
-categoryRouter.delete('/:id', async (req, res, next) => {
-  try {
-    const id = Number(req.params.id)
-    if (!Number.isInteger(id) || id <= 0) {
-      throw new DomainError('INVALID_ID', '无效的分类 id', 400)
-    }
-    await deleteCategory(id)
-    return ok(res, { id })
-  } catch (err) {
-    next(err)
-  }
-})
+categoryRouter.delete('/:id', asyncHandler(async (req, res) => {
+  const id = parseId(req.params.id)
+  await deleteCategory(id)
+  return ok(res, { id })
+}))

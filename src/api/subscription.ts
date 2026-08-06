@@ -1,13 +1,17 @@
-import { api, unwrap, type ApiEnvelope } from '@/lib/api'
-import type { Subscription, SubscriptionInput, SubscriptionView } from '@/types'
+import { api, unwrap, type ApiEnvelope } from '@/helper/api'
+import type { PaginatedResult, Subscription, SubscriptionInput, SubscriptionView } from '@exp-track/shared'
 
 export const subscriptionApi = {
   list: async (params?: {
     view?: SubscriptionView
     categoryId?: number
     search?: string
-  }): Promise<Subscription[]> => {
-    const res = await api.get<ApiEnvelope<Subscription[]>>('/api/subscriptions', {
+    sortBy?: 'expireDate' | 'createdAt'
+    sortOrder?: 'asc' | 'desc'
+    page?: number
+    pageSize?: number
+  }): Promise<PaginatedResult<Subscription>> => {
+    const res = await api.get<ApiEnvelope<PaginatedResult<Subscription>>>('/api/subscriptions', {
       params,
     })
     return unwrap(res)

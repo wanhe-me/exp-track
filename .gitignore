@@ -16,6 +16,7 @@ coverage
 
 # Editor directories and files
 .vscode/*
+.codebuddy/*
 !.vscode/extensions.json
 .idea
 *.suo
@@ -44,6 +45,9 @@ backend/dist
 backend/.env
 backend/.env.local
 backend/*.log
+
+# 部署产物（scripts/build-release.mjs 输出）
+release/
 
 # Docker
 .env

@@ -1,18 +1,11 @@
-import { config } from '../config/index.js'
-import { SqliteAdapter } from './sqlite.js'
+import { MySqlAdapter } from './mysql.js'
 import type { DbAdapter } from './types.js'
 
 let adapter: DbAdapter | null = null
 
 export const getDb = (): DbAdapter => {
   if (!adapter) {
-    if (config.dbDriver === 'sqlite') {
-      adapter = new SqliteAdapter()
-    } else {
-      throw new Error(
-        `[dal] MySQL DAL adapter not yet implemented. Set DB_TYPE=sqlite for quick deployment.`,
-      )
-    }
+    adapter = new MySqlAdapter()
   }
   return adapter
 }

@@ -11,7 +11,8 @@
 - **状态四档**：已过期（红）/ 7 天内到期（橙）/ 30 天内到期（黄）/ 充足（灰绿），阈值可配置。
 - **未来到期时间轴**：以图表展示未来 90 天内到期的订阅分布。
 - **分类管理**：自定义分类增删改，禁止删除被订阅引用的分类。
-- **灵活部署**：快速部署（SQLite，零依赖）与稳定部署（MySQL）两种模式。
+- **额度包**：附属于订阅的独立失效额度（首充赠送 / 活动补偿 / 购买叠加），支持失效自动归档（FR-11~FR-13）。
+- **MySQL 部署**：基于 MySQL 8.0，docker compose 一键拉起 MySQL + phpMyAdmin。
 
 ## 技术栈
 
@@ -19,8 +20,8 @@
 |----|------|
 | 前端 | Vue 3 + Vite + TypeScript + Pinia + Vue Router + ECharts + Day.js + Axios |
 | 后端 | Express 5 + TypeScript + Zod（校验）|
-| 数据库 | SQLite（`better-sqlite3`，快速部署）/ MySQL 8.0（稳定部署，Docker）|
-| 数据访问 | DAL 抽象层（`DbAdapter` 接口），业务代码不感知底层数据库类型 |
+| 数据库 | MySQL 8.0（InnoDB，utf8mb4，Docker 部署）|
+| 数据访问 | DAL 抽象层（`DbAdapter` 接口），业务代码不感知底层数据库 |
 
 ## 快速开始
 
@@ -28,6 +29,7 @@
 
 - Node.js `^22.18.0 || >=24.12.0`
 - pnpm（包管理器）
+- Docker（用于拉起 MySQL，或自备既有 MySQL 8.0 实例）
 
 ### 1. 安装依赖
 
@@ -38,50 +40,43 @@ pnpm install
 cd backend && pnpm install && cd ..
 ```
 
-### 2. 快速部署（SQLite，默认推荐）
-
-无需安装任何数据库服务，开箱即用。
+### 2. 启动 MySQL
 
 ```sh
-# 后端：复制环境变量模板（默认 DB_TYPE=sqlite，可直接使用默认值）
-cd backend && cp .env.example .env && cd ..
+cp .env.example .env          # 配置 MySQL 端口与账号（默认值已对齐 docker-compose）
+docker compose up -d
+```
 
-# 启动后端（首次运行自动创建 data/ 目录与数据库文件）
-cd backend && pnpm dev
+- MySQL：`127.0.0.1:13306`，库名 `exp_track`
+- phpMyAdmin：`127.0.0.1:18080`
 
-# 另开终端，启动前端
+### 3. 启动后端
+
+```sh
+cd backend
+cp .env.example .env          # 默认值已对齐 docker-compose，可直接使用
+pnpm dev
+```
+
+后端首次启动会自动执行迁移建表（含 baseline 检测 + checksum 校验）。
+
+### 4. 启动前端
+
+另开终端：
+
+```sh
 pnpm dev
 ```
 
 - 前端：http://127.0.0.1:15173
 - 后端 API：http://127.0.0.1:15180
-- SQLite 数据库文件：`backend/data/exp-track.db`（便于备份与迁移）
-
-### 3. 稳定部署（MySQL，Docker）
-
-> **注意**：MySQL DAL 适配器尚未实现，此模式暂不可用。以下为规划中的使用方式。
-
-```sh
-# 启动 MySQL + phpMyAdmin
-cp .env.example .env          # 配置 MySQL 端口与账号
-docker compose up -d
-
-# 后端切换为 MySQL
-cd backend
-cp .env.example .env
-# 编辑 .env，设置 DB_TYPE=mysql 并填写 MySQL 连接信息
-pnpm dev
-```
-
-- MySQL：`127.0.0.1:13306`，库名 `exp_track`
-- phpMyAdmin：`127.0.0.1:18080`
 
 ### 同时启动前后端
 
 根目录下执行：
 
 ```sh
-pnpm dev:all
+pnpm dev
 ```
 
 ## 开发命令
@@ -101,10 +96,15 @@ pnpm dev:all
 | 命令 | 说明 |
 |------|------|
 | `pnpm dev` | nodemon + tsx 热重载（127.0.0.1:15180） |
-| `pnpm build` | tsc 编译到 dist/ |
+| `pnpm build` | tsc 编译到 dist/，并把 `src/dal/migrations/` 下的 .sql 复制到 dist |
 | `pnpm start` | 运行编译产物 |
 | `pnpm type-check` | tsc --noEmit |
-| `pnpm lint` | eslint --fix（注：backend 未安装 eslint，请用根目录 `pnpm lint`） |
+| `pnpm lint` | 委托根目录 `pnpm lint` |
+| `pnpm migrate` | 迁移 CLI：`status` / `up` / `make <name>` |
+| `pnpm migrate:status` | 查看已应用 / 待执行迁移（含 baseline 候选提示） |
+| `pnpm migrate:up` | 应用所有待执行迁移（首次启动会自动执行） |
+
+> **数据库迁移说明**：使用自建轻量迁移系统。迁移脚本位于 `backend/src/dal/migrations/mysql/`；数据表字段设计文档见 `sql/schema.sql`（项目根目录，MySQL 8.0 标准，唯一可信源，供人工随时查阅表结构，不参与执行）。migrator 启动时校验已应用迁移的 sha256 checksum，改动已应用迁移文件会拒绝启动。已有库会在首次启动时自动识别为 `001_init` 基线，不破坏现有数据。新增字段按版本号顺序追加 `00X_xxx.sql` 并在 `manifest.ts` 的 `manifestMysql` 注册，并同步更新 `schema.sql`。
 
 ## 配置项
 
@@ -112,16 +112,18 @@ pnpm dev:all
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `DB_TYPE` | 数据库类型：`sqlite` / `mysql` | `sqlite` |
-| `SQLITE_PATH` | SQLite 数据库文件路径（相对 backend 目录） | `./data/exp-track.db` |
 | `PORT` | 后端端口 | `15180` |
 | `HOST` | 后端监听地址 | `127.0.0.1` |
 | `CORS_ORIGIN` | CORS 允许来源（前端地址） | `http://127.0.0.1:15173` |
+| `MYSQL_HOST` | MySQL 主机 | `127.0.0.1` |
+| `MYSQL_PORT` | MySQL 端口 | `13306` |
+| `MYSQL_USER` | MySQL 用户名 | `exp_track` |
+| `MYSQL_PASSWORD` | MySQL 密码 | `exp_track123` |
+| `MYSQL_DATABASE` | MySQL 库名 | `exp_track` |
+| `MYSQL_CONNECTION_LIMIT` | MySQL 连接池大小 | `10` |
 | `SOON7_THRESHOLD` | 7 天内到期阈值（天） | `7` |
 | `SOON30_THRESHOLD` | 30 天内到期阈值（天） | `30` |
 | `TIMELINE_RANGE_DAYS` | 时间轴展示范围（天） | `90` |
-
-MySQL 相关变量（`MYSQL_HOST` / `MYSQL_PORT` / `MYSQL_USER` / `MYSQL_PASSWORD` / `MYSQL_DATABASE`）仅在 `DB_TYPE=mysql` 时生效。
 
 ## 项目结构
 
@@ -130,12 +132,13 @@ exp-track/
 ├── backend/                        # 后端
 │   └── src/
 │       ├── bootstrap/              # 应用入口与优雅关闭
-│       ├── config/                 # 配置加载（DB_TYPE、领域配置）
-│       ├── dal/                    # 数据访问层（DbAdapter 接口 + SQLite 实现）
-│       ├── db/                     # 旧 MySQL 连接池（备用）
+│       ├── config/                 # 配置加载（领域配置）
+│       ├── dal/                    # 数据访问层（DbAdapter 接口 + MySQL 实现）
+│       │   ├── migrations/         # mysql/ 迁移脚本 + manifest.ts（迁移清单）
+│       │   └── migrator/           # 自建迁移执行器（baseline 检测 + checksum 校验 + 事务）
 │       ├── http/                   # 路由挂载
 │       ├── middlewares/            # 请求日志、错误处理
-│       ├── services/               # 业务域（health / category / subscription）
+│       ├── services/               # 业务域（health / category / subscription / quota-pack）
 │       └── utils/                  # 响应封装、日志、日期工具
 ├── src/                            # 前端
 │   ├── api/                        # 接口封装
@@ -150,6 +153,7 @@ exp-track/
 │   ├── utils/                      # 日期、状态工具
 │   └── views/                      # 页面视图
 ├── docs/PRD/                       # 产品需求文档
+├── sql/                            # schema.sql 数据库表结构设计文档（唯一可信源，MySQL 8.0 标准，不参与执行）
 └── docker-compose.yml              # MySQL + phpMyAdmin 编排
 ```
 
@@ -178,7 +182,8 @@ exp-track/
 | POST | `/api/subscriptions/:id/archive` | 归档 |
 | POST | `/api/subscriptions/:id/unarchive` | 取消归档 |
 
+> 额度包（quota-pack）相关接口详见 PRD §FR-11~FR-13 与 `backend/src/services/quota-pack/`。
+
 ## 相关文档
 
 - [产品需求文档（PRD）](docs/PRD/expTrack_PRD.md)
-- [CodeBuddy 开发指引](CODEBUDDY.md)

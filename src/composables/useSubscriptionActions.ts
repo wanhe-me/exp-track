@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { useSubscriptionStore } from '@/stores/subscription'
-import type { Subscription, SubscriptionInput } from '@/types'
-import type { SubscriptionView } from '@/types'
+import type { Subscription, SubscriptionInput, SubscriptionView } from '@exp-track/shared'
 
 export const useSubscriptionActions = (view: SubscriptionView) => {
   const store = useSubscriptionStore()
@@ -10,8 +9,8 @@ export const useSubscriptionActions = (view: SubscriptionView) => {
   const editingSubscription = ref<Subscription | null>(null)
   const deleteTarget = ref<Subscription | null>(null)
   const archiveTarget = ref<Subscription | null>(null)
-  const deleteDialog = ref<{ open: () => void } | null>(null)
-  const archiveDialog = ref<{ open: () => void } | null>(null)
+  const deleteDialogVisible = ref(false)
+  const archiveDialogVisible = ref(false)
 
   const openCreate = (): void => {
     editingSubscription.value = null
@@ -33,7 +32,7 @@ export const useSubscriptionActions = (view: SubscriptionView) => {
 
   const requestDelete = (sub: Subscription): void => {
     deleteTarget.value = sub
-    deleteDialog.value?.open()
+    deleteDialogVisible.value = true
   }
 
   const confirmDelete = async (): Promise<void> => {
@@ -45,7 +44,7 @@ export const useSubscriptionActions = (view: SubscriptionView) => {
 
   const requestArchive = (sub: Subscription): void => {
     archiveTarget.value = sub
-    archiveDialog.value?.open()
+    archiveDialogVisible.value = true
   }
 
   const confirmArchive = async (): Promise<void> => {
@@ -68,8 +67,8 @@ export const useSubscriptionActions = (view: SubscriptionView) => {
     editingSubscription,
     deleteTarget,
     archiveTarget,
-    deleteDialog,
-    archiveDialog,
+    deleteDialogVisible,
+    archiveDialogVisible,
     openCreate,
     openEdit,
     handleSubmit,

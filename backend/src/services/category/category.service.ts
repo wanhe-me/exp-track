@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { getDb } from '../../dal/index.js'
-import { DomainError } from '../../dal/types.js'
+import { DomainError } from '../../types/errors.js'
 import type { CategoryRow } from '../../types/domain.js'
+import type { Category } from '@exp-track/shared'
 
 export const categorySchema = z.object({
   name: z
@@ -11,12 +12,7 @@ export const categorySchema = z.object({
     .max(50, { message: '分类名称长度不能超过 50' }),
 })
 
-export interface CategoryDto {
-  id: number
-  name: string
-  createdAt: string
-  updatedAt: string
-}
+export type CategoryDto = Category
 
 const toDto = (row: CategoryRow): CategoryDto => ({
   id: row.id,

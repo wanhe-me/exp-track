@@ -11,10 +11,14 @@ declare module 'vue-router' {
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    component: () => import('@/layouts/DefaultLayout.vue'),
+    component: () => import('@/layouts/AppLayout.vue'),
     children: [
       {
         path: '',
+        redirect: { name: 'dashboard' },
+      },
+      {
+        path: 'dashboard',
         name: 'dashboard',
         component: () => import('@/views/dashboard/DashboardView.vue'),
         meta: {
@@ -29,6 +33,15 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '未来到期时间轴',
           description: '以时间轴可视化展示未来 90 天内即将到期的订阅分布，帮助你提前规划续费。',
+        },
+      },
+      {
+        path: 'management',
+        name: 'management',
+        component: () => import('@/views/management/SubscriptionManagementView.vue'),
+        meta: {
+          title: '订阅管理',
+          description: '集中管理订阅与分类的增删改查，支持按分类筛选、搜索与额度包维护。',
         },
       },
       {
@@ -50,12 +63,19 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
-        path: 'categories',
-        name: 'categories',
-        component: () => import('@/views/category/CategoriesView.vue'),
+        path: 'error',
+        name: 'error',
+        component: () => import('@/views/error/ErrorView.vue'),
         meta: {
-          title: '分类管理',
-          description: '自定义订阅分类，集中管理分类的增删改，避免重复造轮子。',
+          title: '出错了',
+        },
+      },
+      {
+        path: ':pathMatch(.*)*',
+        name: 'not-found',
+        component: () => import('@/views/error/NotFoundView.vue'),
+        meta: {
+          title: '页面未找到',
         },
       },
     ],

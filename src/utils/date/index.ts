@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { domainConfig } from '@/types'
+import { domainConfig } from '@exp-track/shared'
 
 // 格式化日期为展示格式
 export const formatDate = (date: string | null): string => {

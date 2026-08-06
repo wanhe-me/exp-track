@@ -1,8 +1,9 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import { ok } from '../../utils/response.js'
-import { DomainError } from '../../dal/types.js'
-import type { SubscriptionView } from '../../types/domain.js'
+import { ok } from '../../helper/response.js'
+import { asyncHandler } from '../../helper/async-handler.js'
+import { parseId } from '../../http/params.js'
+import type { SubscriptionView } from '@exp-track/shared'
 import {
   archiveSubscription,
   createSubscription,
@@ -16,115 +17,78 @@ import {
 
 export const subscriptionRouter: Router = Router()
 
-const parseId = (raw: string): number => {
-  const id = Number(raw)
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new DomainError('INVALID_ID', '无效的 id', 400)
-  }
-  return id
-}
+const parseView = (raw: unknown): SubscriptionView =>
+  z.enum(['active', 'archived', 'deleted']).default('active').parse(raw)
 
-const parseView = (raw: unknown): SubscriptionView => {
-  const view = z
-    .enum(['active', 'archived', 'deleted'])
-    .default('active')
-    .parse(raw)
-  return view
-}
+const parsePage = (raw: unknown): number =>
+  z.coerce.number().int().min(1).default(1).parse(raw)
 
-// 列表（支持 view / categoryId / search 查询参数）
-subscriptionRouter.get('/', async (req, res, next) => {
-  try {
-    const view = parseView(req.query.view)
-    const categoryIdRaw = req.query.categoryId
-    const categoryId =
-      categoryIdRaw !== undefined && categoryIdRaw !== ''
-        ? z.coerce.number().int().positive().parse(categoryIdRaw)
-        : undefined
-    const search =
-      typeof req.query.search === 'string' && req.query.search.trim()
-        ? req.query.search.trim()
-        : undefined
+const parsePageSize = (raw: unknown): number =>
+  z.coerce.number().int().min(1).max(100).default(20).parse(raw)
 
-    const data = await listSubscriptions(view, categoryId, search)
-    return ok(res, data)
-  } catch (err) {
-    next(err)
-  }
-})
+const parseSortBy = (raw: unknown): 'expireDate' | 'createdAt' =>
+  z.enum(['expireDate', 'createdAt']).default('expireDate').parse(raw)
 
-// 单个详情
-subscriptionRouter.get('/:id', async (req, res, next) => {
-  try {
-    const id = parseId(req.params.id)
-    const data = await getSubscriptionById(id)
-    return ok(res, data)
-  } catch (err) {
-    next(err)
-  }
-})
+const parseSortOrder = (raw: unknown): 'asc' | 'desc' =>
+  z.enum(['asc', 'desc']).default('asc').parse(raw)
 
-// 创建
-subscriptionRouter.post('/', async (req, res, next) => {
-  try {
-    const data = await createSubscription(req.body)
-    return ok(res, data, 201)
-  } catch (err) {
-    next(err)
-  }
-})
+subscriptionRouter.get('/', asyncHandler(async (req, res) => {
+  const view = parseView(req.query.view)
+  const page = parsePage(req.query.page)
+  const pageSize = parsePageSize(req.query.pageSize)
+  const sortBy = parseSortBy(req.query.sortBy)
+  const sortOrder = parseSortOrder(req.query.sortOrder)
+  const categoryIdRaw = req.query.categoryId
+  const categoryId =
+    categoryIdRaw !== undefined && categoryIdRaw !== ''
+      ? z.coerce.number().int().positive().parse(categoryIdRaw)
+      : undefined
+  const search =
+    typeof req.query.search === 'string' && req.query.search.trim()
+      ? req.query.search.trim()
+      : undefined
 
-// 更新
-subscriptionRouter.put('/:id', async (req, res, next) => {
-  try {
-    const id = parseId(req.params.id)
-    const data = await updateSubscription(id, req.body)
-    return ok(res, data)
-  } catch (err) {
-    next(err)
-  }
-})
+  const data = await listSubscriptions(view, page, pageSize, categoryId, search, sortBy, sortOrder)
+  return ok(res, data)
+}))
 
-// 软删除
-subscriptionRouter.delete('/:id', async (req, res, next) => {
-  try {
-    const id = parseId(req.params.id)
-    await deleteSubscription(id)
-    return ok(res, { id })
-  } catch (err) {
-    next(err)
-  }
-})
+subscriptionRouter.get('/:id', asyncHandler(async (req, res) => {
+  const id = parseId(req.params.id)
+  const data = await getSubscriptionById(id)
+  return ok(res, data)
+}))
 
-// 恢复软删除
-subscriptionRouter.post('/:id/restore', async (req, res, next) => {
-  try {
-    const id = parseId(req.params.id)
-    const data = await restoreSubscription(id)
-    return ok(res, data)
-  } catch (err) {
-    next(err)
-  }
-})
+subscriptionRouter.post('/', asyncHandler(async (req, res) => {
+  const data = await createSubscription(req.body)
+  return ok(res, data, 201)
+}))
 
-// 归档
-subscriptionRouter.post('/:id/archive', async (req, res, next) => {
-  try {
-    const id = parseId(req.params.id)
-    const data = await archiveSubscription(id)
-    return ok(res, data)
-  } catch (err) {
-    next(err)
-  }
-})
+subscriptionRouter.put('/:id', asyncHandler(async (req, res) => {
+  const id = parseId(req.params.id)
+  const data = await updateSubscription(id, req.body)
+  return ok(res, data)
+}))
 
-// 取消归档
-subscriptionRouter.post('/:id/unarchive', async (req, res, next) => {
-  try {
-    const id = parseId(req.params.id)
-    const data = await unarchiveSubscription(id)
-    return ok(res, data)
-  } catch (err) {
-    next(err)
-  }
-})
+subscriptionRouter.delete('/:id', asyncHandler(async (req, res) => {
+  const id = parseId(req.params.id)
+  await deleteSubscription(id)
+  return ok(res, { id })
+}))
+
+subscriptionRouter.post('/:id/restore', asyncHandler(async (req, res) => {
+  const id = parseId(req.params.id)
+  const data = await restoreSubscription(id)
+  return ok(res, data)
+}))
+
+subscriptionRouter.post('/:id/archive', asyncHandler(async (req, res) => {
+  const id = parseId(req.params.id)
+  const data = await archiveSubscription(id)
+  return ok(res, data)
+}))
+
+subscriptionRouter.post('/:id/unarchive', asyncHandler(async (req, res) => {
+  const id = parseId(req.params.id)
+  const data = await unarchiveSubscription(id)
+  return ok(res, data)
+}))

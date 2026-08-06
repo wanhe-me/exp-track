@@ -1,14 +1,14 @@
-// 领域类型：与数据库驱动、配置加载无关的纯业务类型（PRD 第 4 章）。
-// 从 config/index.ts 与 dal/types.ts 抽离，统一归口到类型层，
-// 业务代码统一从本文件引入领域类型，避免类型散落与职责耦合。
+// 后端 DAL 行类型（snake -> camel 转换后的 TS 形态）+ 分类 Input。
+// 跨端共享的契约类型（枚举 / DTO / SubscriptionInput / QuotaPackInput /
+// SubscriptionFilter / QuotaPackFilter / PaginatedResult）已迁至 @exp-track/shared，
+// 本文件只保留后端 DAL 内部使用的行类型与分类输入。
 
-export type BillingCycle = 'month' | 'quarter' | 'year'
+import type {
+  BillingCycle,
+  QuotaCycle,
+  SubscriptionType,
+} from '@exp-track/shared'
 
-export type SubscriptionView = 'active' | 'archived' | 'deleted'
-
-export type SubscriptionStatus = 'expired' | 'soon7' | 'soon30' | 'sufficient'
-
-// 行类型（DAL 返回，已转为 camelCase 与原生 TS 类型）
 export interface CategoryRow {
   id: number
   name: string
@@ -26,10 +26,20 @@ export interface SubscriptionRow {
   expireDate: string
   autoRenew: boolean
   note: string | null
+  subscriptionType: SubscriptionType
+  quotaCycle: QuotaCycle | null
+  quotaTotal: number | null
+  quotaUsed: number | null
+  quotaRemaining: number | null
+  quotaUnit: string | null
   archived: boolean
   deletedAt: string | null
   createdAt: string
   updatedAt: string
+}
+
+export interface SubscriptionWithCategoryRow extends SubscriptionRow {
+  categoryName: string
 }
 
 export interface CreateCategoryInput {
@@ -40,30 +50,20 @@ export interface UpdateCategoryInput {
   name: string
 }
 
-export interface CreateSubscriptionInput {
-  name: string
-  categoryId: number
-  price: number
-  billingCycle: BillingCycle
-  startDate: string
-  expireDate: string
-  autoRenew: boolean
-  note: string | null
-}
+// ---------------- quota_pack（额度包/补给包，FR-11 ~ FR-13）----------------
 
-export interface UpdateSubscriptionInput {
+export interface QuotaPackRow {
+  id: number
+  subscriptionId: number
   name: string
-  categoryId: number
-  price: number
-  billingCycle: BillingCycle
-  startDate: string
+  quantity: number
+  unit: string
+  obtainedDate: string
   expireDate: string
-  autoRenew: boolean
+  source: string | null
   note: string | null
-}
-
-export interface SubscriptionFilter {
-  view: SubscriptionView
-  categoryId?: number
-  search?: string
+  archived: boolean
+  deletedAt: string | null
+  createdAt: string
+  updatedAt: string
 }

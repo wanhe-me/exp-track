@@ -4,6 +4,3 @@ dist
 .env.local
 *.log
 *.tsbuildinfo
-
-# SQLite data
-data/
