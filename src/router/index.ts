@@ -11,7 +11,7 @@ declare module 'vue-router' {
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    component: () => import('@/layouts/DefaultLayout.vue'),
+    component: () => import('@/layouts/AppLayout.vue'),
     children: [
       {
         path: '',
@@ -36,6 +36,15 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'management',
+        name: 'management',
+        component: () => import('@/views/management/SubscriptionManagementView.vue'),
+        meta: {
+          title: '订阅管理',
+          description: '集中管理订阅与分类的增删改查，支持按分类筛选、搜索与额度包维护。',
+        },
+      },
+      {
         path: 'archived',
         name: 'archived',
         component: () => import('@/views/subscription/ArchivedView.vue'),
@@ -51,15 +60,6 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '回收站',
           description: '查看已软删除的订阅记录，可恢复误删的数据。',
-        },
-      },
-      {
-        path: 'categories',
-        name: 'categories',
-        component: () => import('@/views/category/CategoriesView.vue'),
-        meta: {
-          title: '分类管理',
-          description: '自定义订阅分类，集中管理分类的增删改，避免重复造轮子。',
         },
       },
       {

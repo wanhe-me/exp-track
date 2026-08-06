@@ -124,3 +124,13 @@ export interface PaginatedResult<T> {
   page: number
   pageSize: number
 }
+
+// ---- 额度包卡片槽位 DTO（FR-12）----
+// 后端 quota-pack.service 构造、前端消费：最近一个快到期的额度包 + 未删除未归档总数
+export interface QuotaPackSlotDto {
+  subscriptionId: number
+  /** 最近一个快到期的未归档额度包（含已过期项），无则为 null */
+  pack: QuotaPack | null
+  /** 该订阅下未删除未归档额度包总数（>1 时卡片末尾附「等共 N 个」） */
+  totalActive: number
+}

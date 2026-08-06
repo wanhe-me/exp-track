@@ -4,6 +4,7 @@ import { QUOTA_CYCLE_LABELS, type Subscription } from '@exp-track/shared'
 import { remainingDaysLabel } from '@/utils/date'
 import StatusBadge from '@/components/base/display/StatusBadge.vue'
 import CategoryTag from '@/components/base/display/CategoryTag.vue'
+import QuotaPackSlot from '@/components/quota-pack/QuotaPackSlot.vue'
 
 const props = defineProps<{
   subscription: Subscription
@@ -69,6 +70,9 @@ const barColor = computed(() => {
       </div>
       <span class="bar-label">{{ barLabel }}</span>
     </div>
+
+    <!-- 额度包槽位（FR-12：恒定高度，有无额度包均不改变卡片整体高度） -->
+    <QuotaPackSlot :subscription-id="props.subscription.id" />
   </div>
 </template>
 

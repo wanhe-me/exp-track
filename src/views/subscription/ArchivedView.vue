@@ -1,52 +1,39 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCategoryStore } from '@/stores/category'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
-import SubscriptionCard from '@/components/subscription/SubscriptionCard.vue'
-import SubscriptionDetailDialog from '@/components/subscription/SubscriptionDetailDialog.vue'
+import SubscriptionTable from '@/components/management/SubscriptionTable.vue'
 import SubscriptionFormDialog from '@/components/subscription/SubscriptionFormDialog.vue'
 import ConfirmDialog from '@/components/base/dialog/ConfirmDialog.vue'
-import EmptyState from '@/components/base/display/EmptyState.vue'
 import type { Subscription, SubscriptionInput } from '@exp-track/shared'
 
 const categoryStore = useCategoryStore()
 const subscriptionStore = useSubscriptionStore()
-const { subscriptions, loading } = storeToRefs(subscriptionStore)
+const { subscriptions, loading, searchKeyword, sortOrder } = storeToRefs(subscriptionStore)
 
 const actions = useSubscriptionActions('archived')
 
-const detailVisible = ref(false)
-const detailTarget = ref<Subscription | null>(null)
-
-const openDetail = (sub: Subscription): void => {
-  detailTarget.value = sub
-  detailVisible.value = true
+const onSearch = (): void => {
+  void subscriptionStore.fetchAll()
 }
 
-const onDetailEdit = (sub: Subscription): void => {
-  detailVisible.value = false
+const onSortChange = (): void => {
+  void subscriptionStore.fetchAll()
+}
+
+const onSubmit = async (input: SubscriptionInput, id: number | null): Promise<void> => {
+  await actions.handleSubmit(input, id)
+}
+
+const onEdit = (sub: Subscription): void => {
   actions.openEdit(sub)
-}
-
-const onDetailDelete = (sub: Subscription): void => {
-  detailVisible.value = false
-  actions.requestDelete(sub)
-}
-
-const onDetailUnarchive = (sub: Subscription): void => {
-  detailVisible.value = false
-  actions.handleUnarchive(sub)
 }
 
 onMounted(async () => {
   await Promise.all([categoryStore.fetchAll(), subscriptionStore.setView('archived')])
 })
-
-const onSubmit = async (input: SubscriptionInput, id: number | null): Promise<void> => {
-  await actions.handleSubmit(input, id)
-}
 </script>
 
 <template>
@@ -56,30 +43,27 @@ const onSubmit = async (input: SubscriptionInput, id: number | null): Promise<vo
       <p class="page-desc">已归档的订阅不在看板中展示，可随时取消归档恢复</p>
     </div>
 
-    <div v-if="loading" class="loading-state">加载中...</div>
-
-    <EmptyState
-      v-else-if="subscriptions.length === 0"
-      title="暂无归档订阅"
-      description="归档后的订阅会显示在这里"
-    />
-
-    <div v-else class="card-grid">
-      <SubscriptionCard
-        v-for="sub in subscriptions"
-        :key="sub.id"
-        :subscription="sub"
-        @detail="openDetail"
+    <div class="toolbar">
+      <input
+        v-model="searchKeyword"
+        class="input search-input"
+        placeholder="搜索订阅名称..."
+        @keyup.enter="onSearch"
       />
+      <select v-model="sortOrder" class="select sort-select" @change="onSortChange">
+        <option value="asc">到期时间 ↑</option>
+        <option value="desc">到期时间 ↓</option>
+      </select>
+      <button class="btn btn-sm" @click="onSearch">筛选</button>
     </div>
 
-    <SubscriptionDetailDialog
-      v-model="detailVisible"
-      :subscription="detailTarget"
+    <SubscriptionTable
+      :subscriptions="subscriptions"
+      :loading="loading"
       view="archived"
-      @edit="onDetailEdit"
-      @delete="onDetailDelete"
-      @unarchive="onDetailUnarchive"
+      @edit="onEdit"
+      @unarchive="actions.handleUnarchive"
+      @delete="actions.requestDelete"
     />
 
     <SubscriptionFormDialog
@@ -104,5 +88,35 @@ const onSubmit = async (input: SubscriptionInput, id: number | null): Promise<vo
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 12.5rem;
+  max-width: 20rem;
+}
+
+.sort-select {
+  width: auto;
+  min-width: 8rem;
+}
+
+@media (max-width: 768px) {
+  .search-input,
+  .sort-select {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .toolbar .btn {
+    width: 100%;
+  }
 }
 </style>

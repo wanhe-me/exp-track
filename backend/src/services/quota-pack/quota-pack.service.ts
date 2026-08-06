@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { config } from '../../config/index.js'
 import { getDb } from '../../dal/index.js'
 import { DomainError } from '../../types/errors.js'
-import type { QuotaPack, QuotaPackView } from '@exp-track/shared'
+import type { QuotaPack, QuotaPackSlotDto, QuotaPackView } from '@exp-track/shared'
 import type { QuotaPackRow } from '../../types/domain.js'
 import {
   calcRemainingDays,
@@ -41,14 +41,6 @@ export const quotaPackSchema = z.object({
 })
 
 export type QuotaPackDto = QuotaPack
-
-// 卡片槽位 DTO（FR-12）：最近一个快到期的 + 未删除未归档总数
-export interface QuotaPackSlotDto {
-  subscriptionId: number
-  pack: QuotaPackDto | null
-  // 未删除未归档额度包总数（>1 时卡片末尾附「等共 N 个」）
-  totalActive: number
-}
 
 const buildDto = (row: QuotaPackRow): QuotaPackDto => {
   const remainingDays = calcRemainingDays(row.expireDate)

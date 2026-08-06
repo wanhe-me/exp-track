@@ -1,15 +1,30 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { BILLING_CYCLE_LABELS, QUOTA_CYCLE_LABELS, domainConfig, type Subscription, type SubscriptionView } from '@exp-track/shared'
+import {
+  BILLING_CYCLE_LABELS,
+  QUOTA_CYCLE_LABELS,
+  SUBSCRIPTION_TYPE_LABELS,
+  domainConfig,
+  type Subscription,
+  type SubscriptionView,
+} from '@exp-track/shared'
 import { formatDate, remainingDaysLabel } from '@/utils/date'
 import StatusBadge from '@/components/base/display/StatusBadge.vue'
 import CategoryTag from '@/components/base/display/CategoryTag.vue'
 
-const props = defineProps<{
-  modelValue: boolean
-  subscription: Subscription | null
-  view?: SubscriptionView
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    subscription: Subscription | null
+    view?: SubscriptionView
+    /** 只读模式：隐藏编辑/删除/归档按钮，显示「去订阅管理」入口 */
+    readonly?: boolean
+  }>(),
+  {
+    view: 'active',
+    readonly: false,
+  },
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
@@ -18,6 +33,7 @@ const emit = defineEmits<{
   archive: [subscription: Subscription]
   unarchive: [subscription: Subscription]
   restore: [subscription: Subscription]
+  'go-management': []
 }>()
 
 const isQuota = computed(() => props.subscription?.subscriptionType === 'quota')
@@ -62,6 +78,9 @@ const close = (): void => {
         <div class="detail-content">
           <div class="detail-meta">
             <CategoryTag :name="props.subscription.categoryName || '未分类'" />
+            <span v-if="isQuota" class="detail-type-tag">
+              {{ SUBSCRIPTION_TYPE_LABELS.quota }}
+            </span>
           </div>
 
           <div class="detail-grid">
@@ -105,22 +124,30 @@ const close = (): void => {
         </div>
 
         <div class="detail-footer">
-          <template v-if="props.view === 'deleted'">
-            <button class="btn btn-primary" @click="emit('restore', props.subscription!)">恢复</button>
+          <button class="btn" @click="close">关闭</button>
+          <template v-if="props.readonly">
+            <button class="btn btn-primary" @click="emit('go-management')">
+              在订阅管理中打开
+            </button>
           </template>
           <template v-else>
-            <button class="btn" @click="emit('edit', props.subscription!)">编辑</button>
-            <button
-              v-if="props.view === 'archived'"
-              class="btn"
-              @click="emit('unarchive', props.subscription!)"
-            >取消归档</button>
-            <button
-              v-else
-              class="btn"
-              @click="emit('archive', props.subscription!)"
-            >归档</button>
-            <button class="btn btn-danger" @click="emit('delete', props.subscription!)">删除</button>
+            <template v-if="props.view === 'deleted'">
+              <button class="btn btn-primary" @click="emit('restore', props.subscription!)">恢复</button>
+            </template>
+            <template v-else>
+              <button class="btn" @click="emit('edit', props.subscription!)">编辑</button>
+              <button
+                v-if="props.view === 'archived'"
+                class="btn"
+                @click="emit('unarchive', props.subscription!)"
+              >取消归档</button>
+              <button
+                v-else
+                class="btn"
+                @click="emit('archive', props.subscription!)"
+              >归档</button>
+              <button class="btn btn-danger" @click="emit('delete', props.subscription!)">删除</button>
+            </template>
           </template>
         </div>
       </div>
@@ -208,6 +235,20 @@ const close = (): void => {
 .detail-meta {
   display: flex;
   align-items: center;
+  gap: var(--space-2);
+}
+
+.detail-type-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--size-badge-height);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  line-height: 1;
 }
 
 .detail-grid {
