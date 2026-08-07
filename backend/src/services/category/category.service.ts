@@ -77,16 +77,8 @@ export const deleteCategory = async (id: number): Promise<void> => {
     throw new DomainError('CATEGORY_NOT_FOUND', `分类不存在: id=${id}`, 404)
   }
 
-  // 禁止删除被引用分类（FR-10）
-  const count = await getDb().countSubscriptionsByCategory(id)
-  if (count > 0) {
-    throw new DomainError(
-      'CATEGORY_IN_USE',
-      `分类「${target.name}」仍有 ${count} 个订阅引用，请先迁移或重分类后删除`,
-      409,
-      { referencedCount: count },
-    )
-  }
-
+  // 软删除（停用）：不检查是否被订阅引用。
+  // 软删后行保留，外键不触发；历史订阅 LEFT JOIN category 仍可显示分类名。
+  // list / 下拉只展示未删分类，故被删分类不再可选用于新订阅。
   await getDb().deleteCategory(id)
 }

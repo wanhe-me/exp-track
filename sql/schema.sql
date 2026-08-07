@@ -29,16 +29,23 @@
 -- -----------------------------------------------------------------------------
 -- 表：category（订阅分类）
 --   - 分类名称在系统内唯一，用于给订阅打标签（FR-10）
---   - 禁止删除被订阅引用的分类
+--   - 软删除置 deleted_at（与 subscription 一致）：删除即停用，历史订阅联表
+--     仍可显示分类名；list / 下拉只展示未删分类
+--   - name 唯一性通过生成列 name_active 实现：未删行 name_active = name（同名
+--     冲突），软删行 name_active = NULL（多个 NULL 不冲突，允许历史多次软删
+--     同名并复用 name 新建）。MySQL 不支持部分索引，故用生成列方案。
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS category (
-  id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键，自增',
-  name       VARCHAR(50)    NOT NULL                COMMENT '分类名称，最长 50 字符，系统内唯一',
-  created_at DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  updated_at DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键，自增',
+  name        VARCHAR(50)    NOT NULL                COMMENT '分类名称，最长 50 字符，未删状态下系统内唯一',
+  name_active VARCHAR(50)   GENERATED ALWAYS AS (IF(deleted_at IS NULL, name, NULL)) VIRTUAL COMMENT '未删状态名称快照，用于唯一约束；软删行为 NULL 以放行同名复用',
+  deleted_at  DATETIME                DEFAULT NULL   COMMENT '软删除时间，NULL 表示未删除；置值即停用（FR-10）',
+  created_at  DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at  DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (id),
-  UNIQUE KEY uk_category_name (name)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订阅分类表：管理订阅的分类标签，名称唯一';
+  UNIQUE KEY uk_category_name_active (name_active),
+  KEY idx_category_deleted_at (deleted_at)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订阅分类表：管理订阅的分类标签，名称在未删状态下唯一，支持软删除';
 
 
 -- -----------------------------------------------------------------------------

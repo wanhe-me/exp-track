@@ -12,6 +12,7 @@ import type {
 export interface CategoryRow {
   id: number
   name: string
+  deletedAt: string | null
   createdAt: string
   updatedAt: string
 }

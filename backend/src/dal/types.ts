@@ -24,7 +24,6 @@ export interface DbAdapter {
   listCategories(): Promise<CategoryRow[]>
   getCategoryById(id: number): Promise<CategoryRow | null>
   getCategoryByName(name: string): Promise<CategoryRow | null>
-  countSubscriptionsByCategory(categoryId: number): Promise<number>
   createCategory(input: CreateCategoryInput): Promise<CategoryRow>
   updateCategory(id: number, input: UpdateCategoryInput): Promise<CategoryRow | null>
   deleteCategory(id: number): Promise<void>

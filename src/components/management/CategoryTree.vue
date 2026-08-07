@@ -186,7 +186,7 @@ const confirmDelete = async (): Promise<void> => {
     <ConfirmDialog
       v-model="deleteDialogVisible"
       title="删除分类"
-      :message="`确定要删除分类「${deleteTarget?.name}」吗？被订阅引用的分类不可删除。`"
+      :message="`确定要删除分类「${deleteTarget?.name}」吗？删除后该分类从列表移除，已有订阅仍保留原分类名显示。`"
       confirm-text="删除"
       danger
       @confirm="confirmDelete"

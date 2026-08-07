@@ -42,6 +42,7 @@ export const createMysqlPool = (options: MysqlPoolOptions = {}): Pool =>
 const mapCategory = (row: MysqlRow): CategoryRow => ({
   id: Number(row.id),
   name: String(row.name),
+  deletedAt: row.deleted_at === null ? null : String(row.deleted_at),
   createdAt: String(row.created_at),
   updatedAt: String(row.updated_at),
 })
@@ -131,14 +132,14 @@ export class MySqlAdapter implements DbAdapter {
 
   async listCategories(): Promise<CategoryRow[]> {
     const [rows] = await this.conn().query<MysqlRow[]>(
-      'SELECT * FROM category ORDER BY id ASC',
+      'SELECT * FROM category WHERE deleted_at IS NULL ORDER BY id ASC',
     )
     return rows.map(mapCategory)
   }
 
   async getCategoryById(id: number): Promise<CategoryRow | null> {
     const [rows] = await this.conn().query<MysqlRow[]>(
-      'SELECT * FROM category WHERE id = ?',
+      'SELECT * FROM category WHERE id = ? AND deleted_at IS NULL',
       [id],
     )
     return rows[0] ? mapCategory(rows[0]) : null
@@ -146,18 +147,10 @@ export class MySqlAdapter implements DbAdapter {
 
   async getCategoryByName(name: string): Promise<CategoryRow | null> {
     const [rows] = await this.conn().query<MysqlRow[]>(
-      'SELECT * FROM category WHERE name = ?',
+      'SELECT * FROM category WHERE name = ? AND deleted_at IS NULL',
       [name],
     )
     return rows[0] ? mapCategory(rows[0]) : null
-  }
-
-  async countSubscriptionsByCategory(categoryId: number): Promise<number> {
-    const [rows] = await this.conn().query<MysqlRow[]>(
-      'SELECT COUNT(*) AS cnt FROM subscription WHERE category_id = ? AND deleted_at IS NULL',
-      [categoryId],
-    )
-    return Number(rows[0]?.cnt ?? 0)
   }
 
   async createCategory(input: CreateCategoryInput): Promise<CategoryRow> {
@@ -172,14 +165,19 @@ export class MySqlAdapter implements DbAdapter {
 
   async updateCategory(id: number, input: UpdateCategoryInput): Promise<CategoryRow | null> {
     await this.conn().query(
-      'UPDATE category SET name = ?, updated_at = NOW() WHERE id = ?',
+      'UPDATE category SET name = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL',
       [input.name, id],
     )
     return this.getCategoryById(id)
   }
 
   async deleteCategory(id: number): Promise<void> {
-    await this.conn().query('DELETE FROM category WHERE id = ?', [id])
+    // 软删除（停用）：行保留，历史订阅联表仍可显示分类名。
+    // 不检查是否被订阅引用：软删后外键不触发（行未删），且允许停用被引用分类。
+    await this.conn().query(
+      'UPDATE category SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL',
+      [id],
+    )
   }
 
   // ---------------- subscription ----------------

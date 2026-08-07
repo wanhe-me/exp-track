@@ -43,4 +43,5 @@ export const manifestMysql: MigrationEntry[] = [
   loadMysql('001_init'),
   loadMysql('002_quota'),
   loadMysql('003_quota_pack'),
+  loadMysql('004_category_soft_delete'),
 ]

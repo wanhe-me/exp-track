@@ -469,7 +469,7 @@ const quotaCycleSelectOptions = computed(() =>
   border-radius: var(--radius-lg);
   width: 35rem;
   max-width: calc(100vw - var(--space-8));
-  max-height: calc(100vh - var(--space-8));
+  max-height: calc(90vh - var(--space-8));
   display: flex;
   flex-direction: column;
 }
