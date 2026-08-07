@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { AppButton } from '@/components/base'
 
 const router = useRouter()
 
@@ -24,11 +25,8 @@ const goBack = (): void => {
       <p class="error-title">页面未找到</p>
       <p class="error-desc">你访问的页面不存在或已被移除</p>
       <div class="error-actions">
-        <button class="btn" @click="goBack">
-          <FaIcon icon="arrow-left" />
-          返回上一页
-        </button>
-        <button class="btn btn-primary" @click="goHome">返回看板</button>
+        <AppButton icon="arrow-left" @click="goBack">返回上一页</AppButton>
+        <AppButton variant="primary" @click="goHome">返回看板</AppButton>
       </div>
     </div>
   </div>
@@ -101,7 +99,7 @@ const goBack = (): void => {
     width: 100%;
   }
 
-  .error-actions .btn {
+  .error-actions .app-btn {
     width: 100%;
   }
 }

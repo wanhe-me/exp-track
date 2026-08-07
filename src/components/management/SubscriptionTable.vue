@@ -10,6 +10,7 @@ import {
 import { formatDate, remainingDaysLabel } from '@/utils/date'
 import StatusBadge from '@/components/base/display/StatusBadge.vue'
 import EmptyState from '@/components/base/display/EmptyState.vue'
+import { AppButton } from '@/components/base'
 import QuotaPackPanel from '@/components/quota-pack/QuotaPackPanel.vue'
 
 const props = withDefaults(
@@ -115,9 +116,7 @@ const isQuota = (sub: Subscription): boolean => sub.subscriptionType === 'quota'
               <td class="col-actions">
                 <div class="row-actions">
                   <template v-if="view === 'deleted'">
-                    <button class="btn btn-sm" title="恢复" @click="emit('restore', sub)">
-                      <FaIcon icon="arrow-rotate-left" fixed-width /> 恢复
-                    </button>
+                    <AppButton size="sm" icon="arrow-rotate-left" title="恢复" @click="emit('restore', sub)">恢复</AppButton>
                   </template>
                   <template v-else>
                     <button class="btn btn-sm" title="编辑" @click="emit('edit', sub)">

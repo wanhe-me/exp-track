@@ -13,7 +13,7 @@ import {
   type SubscriptionType,
 } from '@exp-track/shared'
 import { todayStr } from '@/utils/date'
-import { DatePicker } from '@/components/base'
+import { DatePicker, AppButton, AppInput, AppTextarea, AppSelect } from '@/components/base'
 
 const props = defineProps<{
   modelValue: boolean
@@ -306,6 +306,14 @@ const quotaInputModeOptions: { value: 'used' | 'remaining'; label: string }[] = 
   { value: 'used', label: '填写已使用' },
   { value: 'remaining', label: '填写剩余' },
 ]
+
+const categoryOptions = computed(() =>
+  categoryStore.categories.map((c) => ({ value: c.id, label: c.name })),
+)
+
+const quotaCycleSelectOptions = computed(() =>
+  quotaCycleOptions.map((o) => ({ value: o.value, label: `${o.label}限额` })),
+)
 </script>
 
 <template>
@@ -319,38 +327,22 @@ const quotaInputModeOptions: { value: 'used' | 'remaining'; label: string }[] = 
 
         <div class="form-content">
           <div class="form-group">
-            <label class="form-label">名称 <span class="required">*</span></label>
-            <input v-model="form.name" class="input" placeholder="如：OpenAI API" maxlength="100" />
-            <p v-if="errors.name" class="form-error">{{ errors.name }}</p>
+            <AppInput v-model="form.name" label="名称" required placeholder="如：OpenAI API" maxlength="100" :error="errors.name" />
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">分类 <span class="required">*</span></label>
-              <select v-model="form.categoryId" class="select">
-                <option value="" disabled>请选择分类</option>
-                <option v-for="c in categoryStore.categories" :key="c.id" :value="c.id">
-                  {{ c.name }}
-                </option>
-              </select>
-              <p v-if="errors.categoryId" class="form-error">{{ errors.categoryId }}</p>
+              <AppSelect v-model="form.categoryId" :options="categoryOptions" label="分类" required placeholder="请选择分类" :error="errors.categoryId" />
             </div>
 
             <div class="form-group">
-              <label class="form-label">价格（{{ domainConfig.currencySymbol }}）<span class="required">*</span></label>
-              <input v-model="form.price" class="input" type="number" step="0.01" min="0" placeholder="0.00" />
-              <p v-if="errors.price" class="form-error">{{ errors.price }}</p>
+              <AppInput v-model="form.price" :label="`价格（${domainConfig.currencySymbol}）`" required type="number" step="0.01" min="0" placeholder="0.00" :error="errors.price" />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">计费周期 <span class="required">*</span></label>
-              <select v-model="form.billingCycle" class="select">
-                <option v-for="opt in billingOptions" :key="opt.value" :value="opt.value">
-                  {{ opt.label }}
-                </option>
-              </select>
+              <AppSelect v-model="form.billingCycle" :options="billingOptions" label="计费周期" required />
             </div>
 
             <div class="form-group">
@@ -381,20 +373,11 @@ const quotaInputModeOptions: { value: 'used' | 'remaining'; label: string }[] = 
           <template v-if="form.subscriptionType === 'quota'">
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">额度周期 <span class="required">*</span></label>
-                <select v-model="form.quotaCycle" class="select">
-                  <option value="" disabled>请选择周期</option>
-                  <option v-for="opt in quotaCycleOptions" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}限额
-                  </option>
-                </select>
-                <p v-if="errors.quotaCycle" class="form-error">{{ errors.quotaCycle }}</p>
+              <AppSelect v-model="form.quotaCycle" :options="quotaCycleSelectOptions" label="额度周期" required placeholder="请选择周期" :error="errors.quotaCycle" />
               </div>
 
               <div class="form-group">
-                <label class="form-label">总额度 <span class="required">*</span></label>
-                <input v-model="form.quotaTotal" class="input" type="number" step="0.01" min="0" placeholder="如 100" />
-                <p v-if="errors.quotaTotal" class="form-error">{{ errors.quotaTotal }}</p>
+              <AppInput v-model="form.quotaTotal" label="总额度" required type="number" step="0.01" min="0" placeholder="如 100" :error="errors.quotaTotal" />
               </div>
             </div>
 
@@ -417,31 +400,27 @@ const quotaInputModeOptions: { value: 'used' | 'remaining'; label: string }[] = 
                 <label class="form-label">
                   已使用额度<template v-if="form.quotaInputMode === 'used'"><span class="required">*</span></template><template v-else><span class="form-label-suffix">（自动计算）</span></template>
                 </label>
-                <input
-                  v-if="form.quotaInputMode === 'used'"
-                  v-model="form.quotaUsed" class="input" type="number" step="0.01" min="0" placeholder="如 30"
-                />
-                <input v-else :value="quotaComputedValue" class="input" type="number" readonly placeholder="自动计算" />
-                <p v-if="errors.quotaUsed" class="form-error">{{ errors.quotaUsed }}</p>
+              <AppInput
+                v-if="form.quotaInputMode === 'used'"
+                v-model="form.quotaUsed" type="number" step="0.01" min="0" placeholder="如 30" :error="errors.quotaUsed"
+              />
+              <AppInput v-else :model-value="quotaComputedValue" type="number" readonly placeholder="自动计算" :error="errors.quotaUsed" />
               </div>
 
               <div class="form-group">
                 <label class="form-label">
                   剩余额度<template v-if="form.quotaInputMode === 'remaining'"><span class="required">*</span></template><template v-else><span class="form-label-suffix">（自动计算）</span></template>
                 </label>
-                <input
-                  v-if="form.quotaInputMode === 'remaining'"
-                  v-model="form.quotaRemaining" class="input" type="number" step="0.01" min="0" placeholder="如 70"
-                />
-                <input v-else :value="quotaComputedValue" class="input" type="number" readonly placeholder="自动计算" />
-                <p v-if="errors.quotaRemaining" class="form-error">{{ errors.quotaRemaining }}</p>
+              <AppInput
+                v-if="form.quotaInputMode === 'remaining'"
+                v-model="form.quotaRemaining" type="number" step="0.01" min="0" placeholder="如 70" :error="errors.quotaRemaining"
+              />
+              <AppInput v-else :model-value="quotaComputedValue" type="number" readonly placeholder="自动计算" :error="errors.quotaRemaining" />
               </div>
             </div>
 
             <div class="form-group">
-              <label class="form-label">额度单位</label>
-              <input v-model="form.quotaUnit" class="input" placeholder="可选，如 $、次、万token" maxlength="20" />
-              <p v-if="errors.quotaUnit" class="form-error">{{ errors.quotaUnit }}</p>
+              <AppInput v-model="form.quotaUnit" label="额度单位" placeholder="可选，如 $、次、万token" maxlength="20" :error="errors.quotaUnit" />
             </div>
           </template>
 
@@ -456,9 +435,7 @@ const quotaInputModeOptions: { value: 'used' | 'remaining'; label: string }[] = 
           </div>
 
           <div class="form-group">
-            <label class="form-label">备注</label>
-            <textarea v-model="form.note" class="textarea" placeholder="可选，纯文本" maxlength="1000"></textarea>
-            <p v-if="errors.note" class="form-error">{{ errors.note }}</p>
+            <AppTextarea v-model="form.note" label="备注" placeholder="可选，纯文本" maxlength="1000" :error="errors.note" />
           </div>
 
           <p class="form-hint currency-hint">
@@ -467,10 +444,10 @@ const quotaInputModeOptions: { value: 'used' | 'remaining'; label: string }[] = 
         </div>
 
         <div class="form-footer">
-          <button class="btn" @click="close">取消</button>
-          <button class="btn btn-primary" :disabled="submitting" @click="handleSubmit">
+          <AppButton @click="close">取消</AppButton>
+          <AppButton variant="primary" :disabled="submitting" @click="handleSubmit">
             {{ isEdit ? '保存' : '添加' }}
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -660,12 +637,6 @@ const quotaInputModeOptions: { value: 'used' | 'remaining'; label: string }[] = 
   color: var(--color-text-tertiary);
   font-weight: 400;
   margin-left: var(--space-1);
-}
-
-.input[readonly] {
-  background: var(--color-bg-hover);
-  color: var(--color-text-tertiary);
-  cursor: default;
 }
 
 .form-footer {

@@ -8,11 +8,17 @@ import CategoryTree from '@/components/management/CategoryTree.vue'
 import SubscriptionTable from '@/components/management/SubscriptionTable.vue'
 import SubscriptionFormDialog from '@/components/subscription/SubscriptionFormDialog.vue'
 import ConfirmDialog from '@/components/base/dialog/ConfirmDialog.vue'
+import { AppButton, AppInput, AppSelect } from '@/components/base'
 import type { Subscription, SubscriptionInput } from '@exp-track/shared'
 
 const categoryStore = useCategoryStore()
 const subscriptionStore = useSubscriptionStore()
 const { subscriptions, loading, searchKeyword, sortOrder } = storeToRefs(subscriptionStore)
+
+const sortOptions: { value: 'asc' | 'desc'; label: string }[] = [
+  { value: 'asc', label: '到期时间 ↑' },
+  { value: 'desc', label: '到期时间 ↓' },
+]
 
 const actions = useSubscriptionActions('active')
 
@@ -44,23 +50,13 @@ onMounted(async () => {
         <h1 class="page-title">订阅管理</h1>
         <p class="page-desc">集中管理订阅与分类，点击行首图标展开额度包维护</p>
       </div>
-      <button class="btn btn-primary" @click="actions.openCreate">
-        <FaIcon icon="plus" fixed-width /> 添加订阅
-      </button>
+      <AppButton variant="primary" icon="plus" @click="actions.openCreate">添加订阅</AppButton>
     </div>
 
     <div class="toolbar">
-      <input
-        v-model="searchKeyword"
-        class="input search-input"
-        placeholder="搜索订阅名称..."
-        @keyup.enter="onSearch"
-      />
-      <select v-model="sortOrder" class="select sort-select" @change="onSortChange">
-        <option value="asc">到期时间 ↑</option>
-        <option value="desc">到期时间 ↓</option>
-      </select>
-      <button class="btn btn-sm" @click="onSearch">筛选</button>
+      <AppInput v-model="searchKeyword" placeholder="搜索订阅名称..." @keyup.enter="onSearch" />
+      <AppSelect v-model="sortOrder" :options="sortOptions" @change="onSortChange" />
+      <AppButton size="sm" @click="onSearch">筛选</AppButton>
     </div>
 
     <div class="management-body">
@@ -69,39 +65,21 @@ onMounted(async () => {
       </aside>
 
       <section class="management-main">
-        <SubscriptionTable
-          :subscriptions="subscriptions"
-          :loading="loading"
-          view="active"
-          @edit="onEdit"
-          @archive="actions.requestArchive"
-          @delete="actions.requestDelete"
-        />
+        <SubscriptionTable :subscriptions="subscriptions" :loading="loading" view="active" @edit="onEdit"
+          @archive="actions.requestArchive" @delete="actions.requestDelete" />
       </section>
     </div>
 
-    <SubscriptionFormDialog
-      v-model="actions.formVisible.value"
-      :subscription="actions.editingSubscription.value"
-      @submit="onSubmit"
-    />
+    <SubscriptionFormDialog v-model="actions.formVisible.value" :subscription="actions.editingSubscription.value"
+      @submit="onSubmit" />
 
-    <ConfirmDialog
-      v-model="actions.deleteDialogVisible.value"
-      title="删除订阅"
-      :message="`确定要删除订阅「${actions.deleteTarget.value?.name}」吗？删除后可在回收站恢复。`"
-      confirm-text="删除"
-      danger
-      @confirm="actions.confirmDelete"
-    />
+    <ConfirmDialog v-model="actions.deleteDialogVisible.value" title="删除订阅"
+      :message="`确定要删除订阅「${actions.deleteTarget.value?.name}」吗？删除后可在回收站恢复。`" confirm-text="删除" danger
+      @confirm="actions.confirmDelete" />
 
-    <ConfirmDialog
-      v-model="actions.archiveDialogVisible.value"
-      title="归档订阅"
-      :message="`确定要归档订阅「${actions.archiveTarget.value?.name}」吗？归档后可在已归档视图查看。`"
-      confirm-text="归档"
-      @confirm="actions.confirmArchive"
-    />
+    <ConfirmDialog v-model="actions.archiveDialogVisible.value" title="归档订阅"
+      :message="`确定要归档订阅「${actions.archiveTarget.value?.name}」吗？归档后可在已归档视图查看。`" confirm-text="归档"
+      @confirm="actions.confirmArchive" />
   </div>
 </template>
 
@@ -117,6 +95,8 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .page-header-left {
@@ -132,14 +112,13 @@ onMounted(async () => {
   align-items: center;
 }
 
-.search-input {
+.toolbar .app-input {
   flex: 1;
   min-width: 12.5rem;
   max-width: 20rem;
 }
 
-.sort-select {
-  width: auto;
+.toolbar .app-select {
   min-width: 8rem;
 }
 
@@ -171,13 +150,13 @@ onMounted(async () => {
     max-height: none;
   }
 
-  .search-input,
-  .sort-select {
+  .toolbar .app-input,
+  .toolbar .app-select {
     max-width: 100%;
     width: 100%;
   }
 
-  .toolbar .btn {
+  .toolbar .app-btn {
     width: 100%;
   }
 }

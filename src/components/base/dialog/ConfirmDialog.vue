@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import AppButton from '../form/AppButton.vue'
 
 const props = defineProps<{
   title?: string
@@ -49,16 +50,15 @@ defineExpose({ open, close })
         <h3 v-if="props.title" class="confirm-title">{{ props.title }}</h3>
         <p class="confirm-message">{{ props.message }}</p>
         <div class="confirm-actions">
-          <button class="btn" @click="onCancel">
+          <AppButton @click="onCancel">
             {{ props.cancelText ?? '取消' }}
-          </button>
-          <button
-            class="btn"
-            :class="props.danger ? 'btn-danger' : 'btn-primary'"
+          </AppButton>
+          <AppButton
+            :variant="props.danger ? 'danger' : 'primary'"
             @click="onConfirm"
           >
             {{ props.confirmText ?? '确认' }}
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>

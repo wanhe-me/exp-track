@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useCategoryStore } from '@/stores/category'
 import { useSubscriptionStore } from '@/stores/subscription'
 import ConfirmDialog from '@/components/base/dialog/ConfirmDialog.vue'
+import { AppInput } from '@/components/base'
 import type { Category } from '@exp-track/shared'
 
 const categoryStore = useCategoryStore()
@@ -108,9 +109,9 @@ const confirmDelete = async (): Promise<void> => {
     </div>
 
     <div class="tree-create">
-      <input
+      <AppInput
         v-model="newName"
-        class="input tree-input"
+        size="sm"
         placeholder="新建分类..."
         maxlength="50"
         @keyup.enter="handleCreate"
@@ -144,7 +145,7 @@ const confirmDelete = async (): Promise<void> => {
       <li v-for="cat in categories" :key="cat.id">
         <!-- 编辑态 -->
         <div v-if="editingId === cat.id" class="tree-edit">
-          <input v-model="editingName" class="input edit-input" maxlength="50" @keyup.enter="saveEdit" />
+          <AppInput v-model="editingName" size="sm" maxlength="50" @keyup.enter="saveEdit" />
           <button class="btn btn-sm btn-primary" title="保存" @click="saveEdit">
             <FaIcon icon="check" />
           </button>
@@ -218,10 +219,9 @@ const confirmDelete = async (): Promise<void> => {
   gap: var(--space-2);
 }
 
-.tree-input {
+.tree-create .app-input,
+.tree-edit .app-input {
   flex: 1;
-  min-height: var(--size-btn-sm-height);
-  font-size: var(--font-size-sm);
 }
 
 .tree-add-btn {
@@ -332,11 +332,5 @@ const confirmDelete = async (): Promise<void> => {
   display: flex;
   gap: var(--space-1);
   padding: var(--space-1) var(--space-2);
-}
-
-.edit-input {
-  flex: 1;
-  min-height: var(--size-btn-sm-height);
-  font-size: var(--font-size-sm);
 }
 </style>

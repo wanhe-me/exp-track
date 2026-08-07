@@ -4,10 +4,16 @@ import { storeToRefs } from 'pinia'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
 import SubscriptionTable from '@/components/management/SubscriptionTable.vue'
+import { AppButton, AppInput, AppSelect } from '@/components/base'
 import type { Subscription } from '@exp-track/shared'
 
 const subscriptionStore = useSubscriptionStore()
 const { subscriptions, loading, searchKeyword, sortOrder } = storeToRefs(subscriptionStore)
+
+const sortOptions: { value: 'asc' | 'desc'; label: string }[] = [
+  { value: 'asc', label: '到期时间 ↑' },
+  { value: 'desc', label: '到期时间 ↓' },
+]
 
 const actions = useSubscriptionActions('deleted')
 
@@ -36,17 +42,9 @@ onMounted(async () => {
     </div>
 
     <div class="toolbar">
-      <input
-        v-model="searchKeyword"
-        class="input search-input"
-        placeholder="搜索订阅名称..."
-        @keyup.enter="onSearch"
-      />
-      <select v-model="sortOrder" class="select sort-select" @change="onSortChange">
-        <option value="asc">到期时间 ↑</option>
-        <option value="desc">到期时间 ↓</option>
-      </select>
-      <button class="btn btn-sm" @click="onSearch">筛选</button>
+      <AppInput v-model="searchKeyword" placeholder="搜索订阅名称..." @keyup.enter="onSearch" />
+      <AppSelect v-model="sortOrder" :options="sortOptions" @change="onSortChange" />
+      <AppButton size="sm" @click="onSearch">筛选</AppButton>
     </div>
 
     <SubscriptionTable
@@ -73,25 +71,24 @@ onMounted(async () => {
   align-items: center;
 }
 
-.search-input {
+.toolbar .app-input {
   flex: 1;
   min-width: 12.5rem;
   max-width: 20rem;
 }
 
-.sort-select {
-  width: auto;
+.toolbar .app-select {
   min-width: 8rem;
 }
 
 @media (max-width: 768px) {
-  .search-input,
-  .sort-select {
+  .toolbar .app-input,
+  .toolbar .app-select {
     max-width: 100%;
     width: 100%;
   }
 
-  .toolbar .btn {
+  .toolbar .app-btn {
     width: 100%;
   }
 }

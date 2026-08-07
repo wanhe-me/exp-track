@@ -5,6 +5,7 @@ import { useQuotaPackStore } from '@/stores/quotaPack'
 import { formatDate, remainingDaysLabel } from '@/utils/date'
 import StatusBadge from '@/components/base/display/StatusBadge.vue'
 import EmptyState from '@/components/base/display/EmptyState.vue'
+import { AppButton } from '@/components/base'
 import ConfirmDialog from '@/components/base/dialog/ConfirmDialog.vue'
 import QuotaPackFormDialog from './QuotaPackFormDialog.vue'
 import type { QuotaPack, QuotaPackInput, QuotaPackView, Subscription, SubscriptionView } from '@exp-track/shared'
@@ -121,13 +122,13 @@ const slotInfo = computed(() => slots.value[subId.value])
             @click="currentView = tab.value"
           >{{ tab.label }}</button>
         </div>
-        <button
+        <AppButton
           v-if="!readOnly"
-          class="btn btn-sm btn-primary"
+          variant="primary"
+          size="sm"
+          icon="plus"
           @click="openCreate"
-        >
-          <FaIcon icon="plus" fixed-width /> 添加
-        </button>
+        >添加</AppButton>
       </div>
     </div>
 
@@ -166,9 +167,7 @@ const slotInfo = computed(() => slots.value[subId.value])
             <td class="qp-col-actions">
               <div class="qp-row-actions">
                 <template v-if="currentView === 'deleted'">
-                  <button class="btn btn-sm" title="恢复" @click="handleRestore(pack)">
-                    <FaIcon icon="arrow-rotate-left" fixed-width /> 恢复
-                  </button>
+                  <AppButton size="sm" icon="arrow-rotate-left" title="恢复" @click="handleRestore(pack)">恢复</AppButton>
                 </template>
                 <template v-else>
                   <button

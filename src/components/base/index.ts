@@ -10,6 +10,7 @@
 export { default as StatusBadge } from './display/StatusBadge.vue'
 export { default as CategoryTag } from './display/CategoryTag.vue'
 export { default as EmptyState } from './display/EmptyState.vue'
+export { default as AppTag } from './display/AppTag.vue'
 
 // ---- dialog（弹窗/反馈组件） ----
 export { default as ConfirmDialog } from './dialog/ConfirmDialog.vue'
@@ -20,4 +21,8 @@ export { default as SizeControl } from './controls/SizeControl.vue'
 
 // ---- form（表单输入组件） ----
 export { default as DatePicker } from './form/DatePicker.vue'
-export type { DisabledDateRange, DatePickerSize } from './form/types'
+export { default as AppButton } from './form/AppButton.vue'
+export { default as AppInput } from './form/AppInput.vue'
+export { default as AppTextarea } from './form/AppTextarea.vue'
+export { default as AppSelect } from './form/AppSelect.vue'
+export type { DisabledDateRange, DatePickerSize, FormSize, SelectOption, TagVariant } from './form/types'

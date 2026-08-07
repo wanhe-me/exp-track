@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
+import { AppButton } from '@/components/base'
 
 const router = useRouter()
 const route = useRoute()
@@ -33,11 +34,8 @@ const retry = (): void => {
       <h1 class="error-title">{{ config.title }}</h1>
       <p class="error-desc">{{ errorMessage || config.description }}</p>
       <div class="error-actions">
-        <button class="btn" @click="retry">
-          <FaIcon icon="arrow-left" />
-          返回上一页
-        </button>
-        <button class="btn btn-primary" @click="goHome">返回看板</button>
+        <AppButton icon="arrow-left" @click="retry">返回上一页</AppButton>
+        <AppButton variant="primary" @click="goHome">返回看板</AppButton>
       </div>
     </div>
   </div>
@@ -98,7 +96,7 @@ const retry = (): void => {
     width: 100%;
   }
 
-  .error-actions .btn {
+  .error-actions .app-btn {
     width: 100%;
   }
 }

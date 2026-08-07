@@ -8,6 +8,7 @@ import { useQuotaPackStore } from '@/stores/quotaPack'
 import SubscriptionCard from '@/components/subscription/SubscriptionCard.vue'
 import SubscriptionDetailDialog from '@/components/subscription/SubscriptionDetailDialog.vue'
 import EmptyState from '@/components/base/display/EmptyState.vue'
+import { AppButton } from '@/components/base'
 import type { Subscription } from '@exp-track/shared'
 
 const router = useRouter()
@@ -54,9 +55,9 @@ onMounted(async () => {
       title="暂无订阅"
       description="前往「订阅管理」添加你的第一项订阅"
     >
-      <button class="btn btn-primary" style="margin-top: 1rem" @click="router.push('/management')">
+      <AppButton variant="primary" style="margin-top: 1rem" @click="router.push('/management')">
         去订阅管理
-      </button>
+      </AppButton>
     </EmptyState>
 
     <div v-else class="card-grid">

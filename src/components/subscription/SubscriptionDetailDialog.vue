@@ -11,6 +11,7 @@ import {
 import { formatDate, remainingDaysLabel } from '@/utils/date'
 import StatusBadge from '@/components/base/display/StatusBadge.vue'
 import CategoryTag from '@/components/base/display/CategoryTag.vue'
+import { AppButton } from '@/components/base'
 
 const props = withDefaults(
   defineProps<{
@@ -124,29 +125,27 @@ const close = (): void => {
         </div>
 
         <div class="detail-footer">
-          <button class="btn" @click="close">关闭</button>
+          <AppButton @click="close">关闭</AppButton>
           <template v-if="props.readonly">
-            <button class="btn btn-primary" @click="emit('go-management')">
+            <AppButton variant="primary" @click="emit('go-management')">
               在订阅管理中打开
-            </button>
+            </AppButton>
           </template>
           <template v-else>
             <template v-if="props.view === 'deleted'">
-              <button class="btn btn-primary" @click="emit('restore', props.subscription!)">恢复</button>
+              <AppButton variant="primary" @click="emit('restore', props.subscription!)">恢复</AppButton>
             </template>
             <template v-else>
-              <button class="btn" @click="emit('edit', props.subscription!)">编辑</button>
-              <button
+              <AppButton @click="emit('edit', props.subscription!)">编辑</AppButton>
+              <AppButton
                 v-if="props.view === 'archived'"
-                class="btn"
                 @click="emit('unarchive', props.subscription!)"
-              >取消归档</button>
-              <button
+              >取消归档</AppButton>
+              <AppButton
                 v-else
-                class="btn"
                 @click="emit('archive', props.subscription!)"
-              >归档</button>
-              <button class="btn btn-danger" @click="emit('delete', props.subscription!)">删除</button>
+              >归档</AppButton>
+              <AppButton variant="danger" @click="emit('delete', props.subscription!)">删除</AppButton>
             </template>
           </template>
         </div>

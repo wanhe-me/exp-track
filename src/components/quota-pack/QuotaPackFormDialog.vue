@@ -2,7 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { QuotaPack, QuotaPackInput } from '@exp-track/shared'
 import { todayStr } from '@/utils/date'
-import { DatePicker } from '@/components/base'
+import { DatePicker, AppButton, AppInput, AppTextarea } from '@/components/base'
 
 const props = defineProps<{
   modelValue: boolean
@@ -161,21 +161,15 @@ const handleSubmit = async (): Promise<void> => {
 
         <div class="qp-content">
           <div class="form-group">
-            <label class="form-label">名称 <span class="required">*</span></label>
-            <input v-model="form.name" class="input" placeholder="如：首充赠送包" maxlength="100" />
-            <p v-if="errors.name" class="form-error">{{ errors.name }}</p>
+            <AppInput v-model="form.name" label="名称" required placeholder="如：首充赠送包" maxlength="100" :error="errors.name" />
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">数量 <span class="required">*</span></label>
-              <input v-model="form.quantity" class="input" type="number" step="0.01" min="0" placeholder="如 100" />
-              <p v-if="errors.quantity" class="form-error">{{ errors.quantity }}</p>
+              <AppInput v-model="form.quantity" label="数量" required type="number" step="0.01" min="0" placeholder="如 100" :error="errors.quantity" />
             </div>
             <div class="form-group">
-              <label class="form-label">单位 <span class="required">*</span></label>
-              <input v-model="form.unit" class="input" placeholder="如 万tokens、次、GB" maxlength="32" />
-              <p v-if="errors.unit" class="form-error">{{ errors.unit }}</p>
+              <AppInput v-model="form.unit" label="单位" required placeholder="如 万tokens、次、GB" maxlength="32" :error="errors.unit" />
             </div>
           </div>
 
@@ -189,23 +183,19 @@ const handleSubmit = async (): Promise<void> => {
           </div>
 
           <div class="form-group">
-            <label class="form-label">来源</label>
-            <input v-model="form.source" class="input" placeholder="可选，如 首充赠送、活动补偿" maxlength="50" />
-            <p v-if="errors.source" class="form-error">{{ errors.source }}</p>
+            <AppInput v-model="form.source" label="来源" placeholder="可选，如 首充赠送、活动补偿" maxlength="50" :error="errors.source" />
           </div>
 
           <div class="form-group">
-            <label class="form-label">备注</label>
-            <textarea v-model="form.note" class="textarea" placeholder="可选，纯文本" maxlength="500"></textarea>
-            <p v-if="errors.note" class="form-error">{{ errors.note }}</p>
+            <AppTextarea v-model="form.note" label="备注" placeholder="可选，纯文本" maxlength="500" :error="errors.note" />
           </div>
         </div>
 
         <div class="qp-footer">
-          <button class="btn" @click="close">取消</button>
-          <button class="btn btn-primary" :disabled="submitting" @click="handleSubmit">
+          <AppButton @click="close">取消</AppButton>
+          <AppButton variant="primary" :disabled="submitting" @click="handleSubmit">
             {{ isEdit ? '保存' : '添加' }}
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -287,10 +277,6 @@ const handleSubmit = async (): Promise<void> => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-4);
-}
-
-.required {
-  color: var(--color-status-expired);
 }
 
 .qp-footer {

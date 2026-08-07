@@ -24,6 +24,7 @@ import {
   faChevronRight,
   faArrowRotateLeft,
   faPencil,
+  faCircleNotch,
 } from '@fortawesome/free-solid-svg-icons'
 import type { App } from 'vue'
 
@@ -53,6 +54,7 @@ export function registerIcons(app: App): void {
     faChevronRight,
     faArrowRotateLeft,
     faPencil,
+    faCircleNotch,
   )
   app.component('FaIcon', FontAwesomeIcon)
 }
