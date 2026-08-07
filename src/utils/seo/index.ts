@@ -1,8 +1,8 @@
 // SEO 工具：按路由动态更新文档标题与 meta 描述（无需额外依赖）。
 // 单页应用（SPA）无 SSR，故在路由切换后于客户端同步更新 <head> 中的关键 meta。
 
-const SITE_NAME = 'exp-track'
-const TITLE_SUFFIX = ' · exp-track'
+const SITE_NAME = 'EXP-TRACK'
+const TITLE_SUFFIX = ' · EXP-TRACK'
 
 interface SeoMeta {
   title?: string

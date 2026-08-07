@@ -30,7 +30,7 @@ const { mobileDrawerOpen } = storeToRefs(uiStore)
         </button>
         <RouterLink to="/dashboard" class="mobile-logo">
           <FaIcon icon="clock" class="mobile-logo-icon" />
-          <span>exp-track</span>
+          <span>EXP-TRACK</span>
         </RouterLink>
       </header>
 

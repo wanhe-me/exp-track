@@ -11,21 +11,22 @@
    */
   --ui-scale: 1;
 
-  /* ---- 主色（霓虹绿 #39FF14，浅底上 hover/active 往深走保白字可读） ---- */
-  --color-primary: #39ff14;
-  --color-primary-hover: #2bd60c;
-  --color-primary-active: #1fb807;
-  --color-primary-soft: rgba(57, 255, 20, 0.12);
+  /* ---- 主色（沉稳绿 #2F9E1F：降饱和加深，白底作字色对比度 ≈5.3:1 达 WCAG AA；
+       hover/active 往深走，保 btn-primary 白字可读） ---- */
+  --color-primary: #2f9e1f;
+  --color-primary-hover: #247a16;
+  --color-primary-active: #1a5e0e;
+  --color-primary-soft: rgba(47, 158, 31, 0.12);
 
-  /* ---- 状态色（FR-06 四档，浅底用稍深色值；充足档与主色呼应霓虹绿） ---- */
+  /* ---- 状态色（FR-06 四档，浅底用稍深色值；充足档与主色呼应） ---- */
   --color-status-expired: #dc2626;
   --color-status-expired-bg: #fee2e2;
   --color-status-soon7: #ea580c;
   --color-status-soon7-bg: #ffedd5;
   --color-status-soon30: #ca8a04;
   --color-status-soon30-bg: #fef9c3;
-  --color-status-sufficient: #1fb807;
-  --color-status-sufficient-bg: rgba(57, 255, 20, 0.12);
+  --color-status-sufficient: #2f9e1f;
+  --color-status-sufficient-bg: rgba(47, 158, 31, 0.12);
 
   /* ---- 中性色（#1A1A1A 文字在 #FFFFFF 上） ---- */
   --color-text-primary: #1a1a1a;
@@ -40,21 +41,21 @@
   --color-bg-page: #ffffff;
   --color-bg-card: #ffffff;
   --color-bg-elevated: #ffffff;
-  --color-bg-hover: rgba(57, 255, 20, 0.06);
-  --color-bg-active: rgba(57, 255, 20, 0.1);
+  --color-bg-hover: rgba(47, 158, 31, 0.06);
+  --color-bg-active: rgba(47, 158, 31, 0.1);
   --color-bg-overlay: rgba(0, 0, 0, 0.45);
 
-  /* ---- 页面背景纹理（白底 + 霓虹绿点缀） ---- */
+  /* ---- 页面背景纹理（白底 + 沉稳绿点缀） ---- */
   --page-gradient-start: #ffffff;
-  --page-gradient-end: #f5fff0;
-  --page-accent-1: rgba(57, 255, 20, 0.06);
-  --page-accent-2: rgba(57, 255, 20, 0.03);
+  --page-gradient-end: #f6faf3;
+  --page-accent-1: rgba(47, 158, 31, 0.06);
+  --page-accent-2: rgba(47, 158, 31, 0.03);
 
-  /* ---- 玻璃拟态 ---- */
-  --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-bg-hover: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(57, 255, 20, 0.3);
-  --glass-border-strong: rgba(57, 255, 20, 0.5);
+  /* ---- 玻璃拟态（侧边栏等：带极浅绿调灰白，与纯白页面区分） ---- */
+  --glass-bg: rgba(247, 250, 244, 0.88);
+  --glass-bg-hover: rgba(243, 248, 240, 0.95);
+  --glass-border: rgba(47, 158, 31, 0.22);
+  --glass-border-strong: rgba(47, 158, 31, 0.4);
   --glass-blur: blur(18px) saturate(160%);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   --glass-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.12);
@@ -81,7 +82,7 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
-  --shadow-focus: 0 0 0 3px rgba(57, 255, 20, 0.25);
+  --shadow-focus: 0 0 0 3px rgba(47, 158, 31, 0.22);
 
   /* ---- 字号（rem 随根字号等比缩放） ---- */
   --font-size-xs: 0.75rem;
@@ -106,7 +107,7 @@
   --size-badge-height: 1.375rem;
 
   /* ---- 布局尺寸（rem 随根字号等比缩放） ---- */
-  --layout-max-width: 75rem;
+  --layout-max-width: 95rem;
   --size-card-min: 21.25rem;
 
   /* ---- 过渡 ---- */

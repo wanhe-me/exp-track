@@ -63,8 +63,8 @@ const onNavClick = (): void => {
   >
     <div class="sidebar-header">
       <RouterLink to="/dashboard" class="sidebar-logo" @click="onNavClick">
-        <FaIcon icon="clock" class="logo-icon" />
-        <span v-if="!sidebarCollapsed" class="logo-text">exp-track</span>
+        <!-- <FaIcon icon="clock" class="logo-icon" /> -->
+        <span v-if="!sidebarCollapsed" class="logo-text">EXP-TRACK</span>
       </RouterLink>
     </div>
 
