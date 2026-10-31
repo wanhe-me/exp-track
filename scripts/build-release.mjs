@@ -12,7 +12,7 @@
 // 服务器上：cd backend && pnpm install --prod && pnpm start
 // （@exp-track/shared 仅后端类型期使用，已擦除；release 无需 workspace 与 shared 产物。）
 
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -46,6 +46,7 @@ const prodPkg = {
   private: pkg.private,
   type: pkg.type,
   description: pkg.description,
+  license: pkg.license,
   scripts: { start: 'node dist/bootstrap/server.js' },
   dependencies: pkg.dependencies,
   engines: pkg.engines,

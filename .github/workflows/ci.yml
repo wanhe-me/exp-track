@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: 类型检查 / Lint / 构建
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      # 前后端的 type-check 都依赖 @exp-track/shared 的 dist，
+      # 必须先构建，否则会报模块找不到。
+      - name: 构建共享包
+        run: pnpm build:shared
+
+      # 不带 --fix：CI 里要让问题暴露成失败，而不是被自动改掉后静默通过。
+      # 脚本名不用 lint:* 前缀，避免被本地 `pnpm lint` 的通配一起跑到。
+      - name: Lint
+        run: pnpm ci:lint
+
+      # 含 type-check + 前端构建 + 后端构建 + release 组装
+      - name: 构建
+        run: pnpm build

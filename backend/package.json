@@ -4,6 +4,12 @@
   "private": true,
   "type": "module",
   "description": "会员订阅追踪 - 后端服务",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wanhe-me/exp-track.git",
+    "directory": "backend"
+  },
   "scripts": {
     "dev": "nodemon --watch src -e ts,json --exec \"tsx src/bootstrap/server.ts\"",
     "build": "tsc -p tsconfig.json && tsx scripts/copy-migrations.ts",
