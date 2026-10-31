@@ -41,7 +41,10 @@ export const config = {
   env: process.env.NODE_ENV ?? 'development',
   host: process.env.HOST ?? '127.0.0.1',
   port: intEnv('PORT', 15180),
-  corsOrigin: process.env.CORS_ORIGIN?.split(',').map(s => s.trim()) ?? ['http://127.0.0.1:15173'],
+  // CORS 白名单：逗号分隔多个来源。开发默认放行本机前端 dev server 的两种写法。
+  corsOrigin: process.env.CORS_ORIGIN?.split(',')
+    .map((s) => s.trim())
+    .filter((s) => s !== '') ?? ['http://127.0.0.1:15173', 'http://localhost:15173'],
   mysql: {
     host: process.env.MYSQL_HOST ?? '127.0.0.1',
     port: intEnv('MYSQL_PORT', 13306),
