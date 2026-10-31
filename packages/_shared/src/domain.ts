@@ -113,6 +113,9 @@ export interface SubscriptionFilter {
   expireFrom?: string
   /** 到期日期上界（含，YYYY-MM-DD）：按状态四档筛选时由 service 换算后下推到 SQL */
   expireTo?: string
+  /** 排序字段。必须在 SQL 层排序，否则先分页再排序会导致跨页顺序错乱 */
+  sortBy?: 'expireDate' | 'createdAt'
+  sortOrder?: 'asc' | 'desc'
   page?: number
   pageSize?: number
 }

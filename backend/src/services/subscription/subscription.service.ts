@@ -191,7 +191,8 @@ export const listSubscriptions = async (
   sortBy: 'expireDate' | 'createdAt' = 'expireDate',
   sortOrder: 'asc' | 'desc' = 'asc',
 ): Promise<PaginatedResult<SubscriptionDto>> => {
-  const filter: SubscriptionFilter = { view, page, pageSize }
+  // 排序字段与方向一并下推 SQL：若在 LIMIT 之后对当前页内存排序，跨页顺序会错乱
+  const filter: SubscriptionFilter = { view, page, pageSize, sortBy, sortOrder }
   if (categoryId !== undefined) filter.categoryId = categoryId
   if (search) filter.search = search
   // 状态在 SQL 层过滤：若在分页后内存过滤，total 与每页条数都会失真
@@ -206,19 +207,7 @@ export const listSubscriptions = async (
     getDb().countSubscriptions(filter),
   ])
 
-  const items = rows.map(buildDto)
-
-  items.sort((a, b) => {
-    let cmp: number
-    if (sortBy === 'expireDate') {
-      cmp = a.remainingDays - b.remainingDays
-    } else {
-      cmp = a.createdAt.localeCompare(b.createdAt)
-    }
-    return sortOrder === 'asc' ? cmp : -cmp
-  })
-
-  return { items, total, page, pageSize }
+  return { items: rows.map(buildDto), total, page, pageSize }
 }
 
 export const getSubscriptionById = async (id: number): Promise<SubscriptionDto> => {

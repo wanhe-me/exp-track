@@ -92,6 +92,12 @@ const SUBSCRIPTION_JOIN_SQL = `
   LEFT JOIN category c ON s.category_id = c.id
 `
 
+// 排序字段白名单：只允许映射到固定列，避免把外部输入拼进 ORDER BY
+const SORT_COLUMNS = {
+  expireDate: 's.expire_date',
+  createdAt: 's.created_at',
+} as const
+
 export class MySqlAdapter implements DbAdapter {
   private pool: Pool | null = null
 
@@ -220,7 +226,10 @@ export class MySqlAdapter implements DbAdapter {
 
   async listSubscriptions(filter: SubscriptionFilter): Promise<SubscriptionWithCategoryRow[]> {
     const { where, params } = this.buildFilterClause(filter)
-    let sql = `${SUBSCRIPTION_JOIN_SQL} WHERE ${where} ORDER BY s.expire_date ASC`
+    // 排序必须与 LIMIT 在同一层 SQL 完成：先分页再在应用层排序会让跨页顺序错乱
+    const sortColumn = SORT_COLUMNS[filter.sortBy ?? 'expireDate']
+    const sortDirection = filter.sortOrder === 'desc' ? 'DESC' : 'ASC'
+    let sql = `${SUBSCRIPTION_JOIN_SQL} WHERE ${where} ORDER BY ${sortColumn} ${sortDirection}`
 
     if (filter.page !== undefined && filter.pageSize !== undefined) {
       sql += ' LIMIT ? OFFSET ?'
