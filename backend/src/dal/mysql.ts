@@ -109,9 +109,18 @@ export class MySqlAdapter implements DbAdapter {
   }
 
   async init(): Promise<void> {
+    // 迁移脚本允许包含多条 SQL，必须用专用连接池执行；
+    // 业务池保持禁用以降低 SQL 注入后的连锁执行风险。
+    const migrationPool = createMysqlPool({ multipleStatements: true })
+    let result: Awaited<ReturnType<typeof runMySqlMigrations>>
+    try {
+      result = await runMySqlMigrations(migrationPool, manifestMysql)
+    } finally {
+      await migrationPool.end()
+    }
+
     this.pool = createMysqlPool({ multipleStatements: false })
     await this.ping()
-    const result = await runMySqlMigrations(this.pool, manifestMysql)
     logger.info('mysql initialized', {
       host: config.mysql.host,
       port: config.mysql.port,
