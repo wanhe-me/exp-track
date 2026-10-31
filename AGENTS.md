@@ -190,6 +190,7 @@ git push origin v0.6.0              # 标签需单独推送，不会随分支走
 
 - 版本号遵循 `vMAJOR.MINOR.PATCH`；tag 用**附注标签**（`-a`），不用轻量标签。
 - tag **只打在 `main`** 上，不在 `develop` 或集成分支上打。
+- **发版版本只由 tag 承载**。`package.json` 的 `version` 是**源码版本**，与发版版本各自独立演进：发版时**不要**去改它，也不要建立两者的同步或校验。看到 tag 是 `v0.6.0` 而 `package.json` 写着 `0.0.0`，是正常状态，不是遗漏。
 - 发版前确认 `develop` 的 type-check / lint / 构建全部通过。
 
 ## 配置与环境变量
