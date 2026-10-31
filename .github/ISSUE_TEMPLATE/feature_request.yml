@@ -1,0 +1,60 @@
+name: 功能建议
+description: 现有功能不好用，或者缺了某个能力
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **先说场景，再说方案。** 只写「希望加个搜索框」这种，维护者没法判断该不该做、做成什么样。
+
+        这个项目的定位是「通用的包年包月订阅到期追踪」，并且**坚持手动填写、不做自动抓取账单 / 自动续期**。超出这个范围的想法可以先聊，但很可能被拒。
+
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 你的使用场景
+      description: 你在管多少条订阅、什么类型、具体卡在哪一步。越具体越好。
+      placeholder: |
+        我在管 30 多个大模型 API 和 SaaS 订阅，其中一半是月付。
+        每次想看「这个月哪些要续费」都得从头翻一遍卡片，翻到第 10 个就乱了。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 你希望它怎么工作
+      description: 描述交互和结果，不用写技术方案
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 你现在怎么绕过这个问题
+      description: 手动记在 Excel？用别的工具？这能帮判断需求的真实强度
+    validations:
+      required: false
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 你估计这属于
+      options:
+        - 界面小改动（加个按钮 / 调布局）
+        - 新功能（需要新页面或新交互）
+        - 数据模型改动（需要加表或加字段）
+        - 不确定
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 我已搜索过现有 issue 和讨论，没有重复
+          required: true
+        - label: 这个需求不依赖自动抓取第三方账单或自动续费
+          required: true

@@ -2,6 +2,13 @@
   "name": "exp-track",
   "version": "0.0.0",
   "private": true,
+  "description": "本地优先的订阅到期追踪与可视化网站",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wanhe-me/exp-track.git"
+  },
+  "packageManager": "pnpm@11.28.2",
   "type": "module",
   "scripts": {
     "predev": "pnpm --dir packages/_shared build",
@@ -21,7 +28,8 @@
     "type-check": "vue-tsc --build",
     "lint": "run-s \"lint:*\"",
     "lint:oxlint": "oxlint . --fix",
-    "lint:eslint": "eslint . --fix --cache"
+    "lint:eslint": "eslint . --fix --cache",
+    "ci:lint": "oxlint . && eslint ."
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.3.1",
