@@ -1,11 +1,18 @@
 import { api, unwrap, type ApiEnvelope } from '@/helper/api'
-import type { PaginatedResult, Subscription, SubscriptionInput, SubscriptionView } from '@exp-track/shared'
+import type {
+  PaginatedResult,
+  Subscription,
+  SubscriptionInput,
+  SubscriptionStatus,
+  SubscriptionView,
+} from '@exp-track/shared'
 
 export const subscriptionApi = {
   list: async (params?: {
     view?: SubscriptionView
     categoryId?: number
     search?: string
+    status?: SubscriptionStatus
     sortBy?: 'expireDate' | 'createdAt'
     sortOrder?: 'asc' | 'desc'
     page?: number

@@ -109,6 +109,10 @@ export interface SubscriptionFilter {
   view: SubscriptionView
   categoryId?: number
   search?: string
+  /** 到期日期下界（含，YYYY-MM-DD）：按状态四档筛选时由 service 换算后下推到 SQL */
+  expireFrom?: string
+  /** 到期日期上界（含，YYYY-MM-DD）：按状态四档筛选时由 service 换算后下推到 SQL */
+  expireTo?: string
   page?: number
   pageSize?: number
 }

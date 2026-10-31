@@ -229,5 +229,4 @@ exp-track/
 
 - [产品需求文档 - 单用户单实例版](docs/PRD/expTrack_SingleUser_PRD.md)
 - [产品需求文档 - 团队多人协作版](docs/PRD/expTrack_Team_PRD.md)
-- [CLAUDE.md](CLAUDE.md)（架构与工程规范详尽文档）
-- [AGENTS.md](AGENTS.md)（Agent 协作高价值指引）
+- [AGENTS.md](AGENTS.md)（开发约束与协作说明，唯一指引文档）

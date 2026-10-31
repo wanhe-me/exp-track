@@ -204,6 +204,17 @@ export class MySqlAdapter implements DbAdapter {
       params.push(`%${filter.search}%`)
     }
 
+    // 状态四档筛选：service 把状态换算成到期日期区间后下推，保证分页与 total 准确
+    if (filter.expireFrom) {
+      conditions.push('s.expire_date >= ?')
+      params.push(filter.expireFrom)
+    }
+
+    if (filter.expireTo) {
+      conditions.push('s.expire_date <= ?')
+      params.push(filter.expireTo)
+    }
+
     return { where: conditions.join(' AND '), params }
   }
 

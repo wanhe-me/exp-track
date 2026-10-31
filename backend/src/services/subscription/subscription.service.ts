@@ -6,6 +6,7 @@ import type {
   QuotaCycle,
   Subscription,
   SubscriptionFilter,
+  SubscriptionStatus,
   SubscriptionType,
   SubscriptionView,
 } from '@exp-track/shared'
@@ -15,6 +16,7 @@ import {
   calcStatus,
   isExpireOnAfterStart,
   isValidDateStr,
+  statusExpireRange,
 } from '../../utils/date.js'
 
 const priceField = z
@@ -185,12 +187,19 @@ export const listSubscriptions = async (
   pageSize: number,
   categoryId?: number,
   search?: string,
+  status?: SubscriptionStatus,
   sortBy: 'expireDate' | 'createdAt' = 'expireDate',
   sortOrder: 'asc' | 'desc' = 'asc',
 ): Promise<PaginatedResult<SubscriptionDto>> => {
   const filter: SubscriptionFilter = { view, page, pageSize }
   if (categoryId !== undefined) filter.categoryId = categoryId
   if (search) filter.search = search
+  // 状态在 SQL 层过滤：若在分页后内存过滤，total 与每页条数都会失真
+  if (status) {
+    const { expireFrom, expireTo } = statusExpireRange(status)
+    if (expireFrom) filter.expireFrom = expireFrom
+    if (expireTo) filter.expireTo = expireTo
+  }
 
   const [rows, total] = await Promise.all([
     getDb().listSubscriptions(filter),
