@@ -138,6 +138,47 @@ exp-track 是**本地优先的订阅到期追踪与可视化网站**，单仓库
 - **额度包（FR-11~13）**：仅额度型订阅有；失效后宽限 `archiveGraceDays` 天内仍展示并标红，超过后惰性置 `archived = true`。
 - **货币**：统一人民币 `¥`，多币种属第二阶段。
 
+## 分支与发版流程
+
+分支模型：`main` = **发版线**（只在发版时更新），`develop` = 集成分支，其余为**集成工作分支**（一次长任务一条）。
+
+### 硬性规则
+
+- **禁止直接向 `develop` 提交**。长任务必须先开集成工作分支，在分支上提交，完成后**停下来等审查**。
+- **合入 `develop` 必须收到明确的合并指令**。任务做完只汇报，不要自行合并。
+- **所有合并一律 `--no-ff`**，禁止 fast-forward、禁止 squash。fast-forward 会压平拓扑，看不出「这批改动是一个整体」。
+- `main` 平时不动，只在发版时从 `develop` 合入。
+
+### 长任务流程
+
+```sh
+git switch -c fix/xxx develop        # 1. 从 develop 切集成分支
+# ... 开发、提交 ...
+# 2. 在分支上跑完 type-check / lint / 构建，工作区保持干净
+# 3. 汇报改动与验证结果，等审查——不要自行合并
+git switch develop
+git merge --no-ff fix/xxx            # 4. 收到明确合并指令后才执行
+git branch -d fix/xxx                # 5. 用 -d 只删已完全合并的分支
+```
+
+集成分支命名与提交前缀保持一致：`feat/<主题>` / `fix/<主题>` / `refactor/<主题>` / `docs/<主题>` / `chore/<主题>`。
+
+**不要用 `git branch -D`** 强删分支。若 `-d` 报 not fully merged，说明有提交没进 develop，回到第 3 步报告，别硬删。
+
+### 发版流程
+
+```sh
+git switch main
+git merge --no-ff develop           # 必须是 --no-ff
+git tag -a v0.6.0 -m "v0.6.0"       # 版本号打在 main 上
+git push origin main
+git push origin v0.6.0              # 标签需单独推送，不会随分支走
+```
+
+- 版本号遵循 `vMAJOR.MINOR.PATCH`；tag 用**附注标签**（`-a`），不用轻量标签。
+- tag **只打在 `main`** 上，不在 `develop` 或集成分支上打。
+- 发版前确认 `develop` 的 type-check / lint / 构建全部通过。
+
 ## 配置与环境变量
 
 集中在 `backend/src/config/index.ts`，全部经 `config` 对象读取：
