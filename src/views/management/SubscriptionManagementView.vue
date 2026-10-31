@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCategoryStore } from '@/stores/category'
 import { useSubscriptionStore } from '@/stores/subscription'
@@ -9,7 +9,7 @@ import SubscriptionTable from '@/components/management/SubscriptionTable.vue'
 import SubscriptionFormDialog from '@/components/subscription/SubscriptionFormDialog.vue'
 import ConfirmDialog from '@/components/base/dialog/ConfirmDialog.vue'
 import { AppButton, AppInput, AppSelect } from '@/components/base'
-import type { Subscription, SubscriptionInput } from '@exp-track/shared'
+import { STATUS_LABELS, type Subscription, type SubscriptionInput, type SubscriptionStatus } from '@exp-track/shared'
 
 const categoryStore = useCategoryStore()
 const subscriptionStore = useSubscriptionStore()
@@ -19,6 +19,19 @@ const sortOptions: { value: 'asc' | 'desc'; label: string }[] = [
   { value: 'asc', label: '到期时间 ↑' },
   { value: 'desc', label: '到期时间 ↓' },
 ]
+
+// 状态筛选：AppSelect 的值为字符串，空串代表「全部状态」，与 store 的 undefined 互转
+const statusOptions = [
+  { value: '', label: '全部状态' },
+  ...Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label })),
+]
+
+const statusFilter = computed({
+  get: () => subscriptionStore.filterStatus ?? '',
+  set: (value: string) => {
+    subscriptionStore.filterStatus = value === '' ? undefined : (value as SubscriptionStatus)
+  },
+})
 
 const actions = useSubscriptionActions('active')
 
@@ -55,6 +68,7 @@ onMounted(async () => {
 
     <div class="toolbar">
       <AppInput v-model="searchKeyword" placeholder="搜索订阅名称..." @keyup.enter="onSearch" />
+      <AppSelect v-model="statusFilter" :options="statusOptions" @change="onSearch" />
       <AppSelect v-model="sortOrder" :options="sortOptions" @change="onSortChange" />
       <AppButton size="sm" @click="onSearch">筛选</AppButton>
     </div>

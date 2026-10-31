@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { subscriptionApi } from '@/api/subscription'
-import { domainConfig, type Subscription, type SubscriptionInput, type SubscriptionView } from '@exp-track/shared'
+import {
+  domainConfig,
+  type Subscription,
+  type SubscriptionInput,
+  type SubscriptionStatus,
+  type SubscriptionView,
+} from '@exp-track/shared'
 
 export const useSubscriptionStore = defineStore('subscription', () => {
   const subscriptions = ref<Subscription[]>([])
@@ -10,6 +16,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   const currentView = ref<SubscriptionView>('active')
   const filterCategoryId = ref<number | undefined>(undefined)
   const searchKeyword = ref('')
+  const filterStatus = ref<SubscriptionStatus | undefined>(undefined)
   const sortBy = ref<'expireDate' | 'createdAt'>('expireDate')
   const sortOrder = ref<'asc' | 'desc'>('asc')
 
@@ -20,6 +27,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
         view: currentView.value,
         categoryId: filterCategoryId.value,
         search: searchKeyword.value.trim() || undefined,
+        status: filterStatus.value,
         sortBy: sortBy.value,
         sortOrder: sortOrder.value,
       })
@@ -30,8 +38,18 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     }
   }
 
+  // 清空页面级筛选条件
+  const resetFilters = (): void => {
+    filterCategoryId.value = undefined
+    searchKeyword.value = ''
+    filterStatus.value = undefined
+  }
+
   const setView = async (view: SubscriptionView): Promise<void> => {
     currentView.value = view
+    // 进入任一视图都视为重新开始：清空上一页面遗留的搜索 / 分类 / 状态条件，
+    // 否则归档页、回收站、时间轴会继承看板筛选且页面上无处清除。
+    resetFilters()
     await fetchAll()
   }
 
@@ -83,9 +101,11 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     currentView,
     filterCategoryId,
     searchKeyword,
+    filterStatus,
     sortBy,
     sortOrder,
     fetchAll,
+    resetFilters,
     setView,
     create,
     update,
