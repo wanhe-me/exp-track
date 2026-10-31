@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { ok } from '../../helper/response.js'
 import { asyncHandler } from '../../helper/async-handler.js'
 import { parseId } from '../../http/params.js'
-import type { SubscriptionView } from '@exp-track/shared'
+import type { SubscriptionStatus, SubscriptionView } from '@exp-track/shared'
 import {
   archiveSubscription,
   createSubscription,
@@ -32,12 +32,19 @@ const parseSortBy = (raw: unknown): 'expireDate' | 'createdAt' =>
 const parseSortOrder = (raw: unknown): 'asc' | 'desc' =>
   z.enum(['asc', 'desc']).default('asc').parse(raw)
 
+// 状态四档筛选为可选参数（FR-07），缺省表示不筛选
+const parseStatus = (raw: unknown): SubscriptionStatus | undefined => {
+  if (raw === undefined || raw === '') return undefined
+  return z.enum(['expired', 'soon7', 'soon30', 'sufficient']).parse(raw)
+}
+
 subscriptionRouter.get('/', asyncHandler(async (req, res) => {
   const view = parseView(req.query.view)
   const page = parsePage(req.query.page)
   const pageSize = parsePageSize(req.query.pageSize)
   const sortBy = parseSortBy(req.query.sortBy)
   const sortOrder = parseSortOrder(req.query.sortOrder)
+  const status = parseStatus(req.query.status)
   const categoryIdRaw = req.query.categoryId
   const categoryId =
     categoryIdRaw !== undefined && categoryIdRaw !== ''
@@ -48,7 +55,16 @@ subscriptionRouter.get('/', asyncHandler(async (req, res) => {
       ? req.query.search.trim()
       : undefined
 
-  const data = await listSubscriptions(view, page, pageSize, categoryId, search, sortBy, sortOrder)
+  const data = await listSubscriptions(
+    view,
+    page,
+    pageSize,
+    categoryId,
+    search,
+    status,
+    sortBy,
+    sortOrder,
+  )
   return ok(res, data)
 }))
 

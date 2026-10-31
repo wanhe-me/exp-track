@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 安全问题 / 漏洞
+    url: https://github.com/wanhe-me/exp-track/security/advisories/new
+    about: 涉及鉴权、数据泄露、远程执行的问题请走私密渠道，不要开公开 issue
+  - name: 使用问题 / 讨论
+    url: https://github.com/wanhe-me/exp-track/discussions
+    about: 不确定是不是 bug、想聊方案、想展示自己的用法，来这里

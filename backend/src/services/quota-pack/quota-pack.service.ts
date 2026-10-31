@@ -121,7 +121,16 @@ export const createQuotaPack = async (
   subscriptionId: number,
   input: unknown,
 ): Promise<QuotaPackDto> => {
-  await validateSubscriptionActive(subscriptionId)
+  const sub = await validateSubscriptionActive(subscriptionId)
+  // 额度包只属于额度型订阅：标准型订阅挂额度包会让看板槽位与卡片语义错位
+  if (sub.subscriptionType !== 'quota') {
+    throw new DomainError(
+      'SUBSCRIPTION_NOT_QUOTA',
+      '只有额度型订阅才能添加额度包',
+      400,
+      { subscriptionId, subscriptionType: sub.subscriptionType },
+    )
+  }
   const parsed = quotaPackSchema.parse(input)
   validateCrossFields(parsed.obtainedDate, parsed.expireDate)
   const row = await getDb().createQuotaPack(subscriptionId, {

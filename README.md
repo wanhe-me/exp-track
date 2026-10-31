@@ -11,7 +11,7 @@
 - **状态四档**：已过期（红）/ 7 天内到期（橙）/ 30 天内到期（黄）/ 充足（灰绿），阈值可配置。
 - **未来到期时间轴**：以图表展示未来 90 天内到期的订阅分布。
 - **分类管理**：自定义分类增删改，删除为软删除（停用），历史订阅保留原分类名显示。
-- **额度包**：附属于订阅的独立失效额度（首充赠送 / 活动补偿 / 购买叠加），支持失效自动归档（FR-11~FR-13）。
+- **额度包**：附属于订阅的独立失效额度（首充赠送 / 活动补偿 / 购买叠加），失效后延迟自动归档。
 - **界面缩放**：rem 等比缩放体系，4 档预设，全站尺寸随根字号等比变化。
 - **MySQL 部署**：基于 MySQL 8.0，docker compose 一键拉起 MySQL + phpMyAdmin。
 
@@ -178,7 +178,6 @@ exp-track/
 │   ├── utils/                      # 日期、状态工具
 │   └── views/                      # 页面（dashboard / timeline / management / subscription / error）
 ├── deploy/                         # nginx.conf.example（同源部署示例）
-├── docs/PRD/                       # 产品需求文档（单用户版 / 团队版）
 ├── scripts/                        # build-release.mjs（打包发布产物）
 ├── sql/                            # schema.sql 数据库表结构设计文档（唯一可信源，不参与执行）
 └── docker-compose.yml              # MySQL + phpMyAdmin 编排
@@ -208,7 +207,7 @@ exp-track/
 | POST | `/api/subscriptions/:id/restore` | 恢复软删除 |
 | POST | `/api/subscriptions/:id/archive` | 归档 |
 | POST | `/api/subscriptions/:id/unarchive` | 取消归档 |
-| GET | `/api/subscriptions/:id/quota-packs/slot` | 额度包聚合槽位（FR-11） |
+| GET | `/api/subscriptions/:id/quota-packs/slot` | 额度包聚合槽位 |
 | GET / POST | `/api/subscriptions/:id/quota-packs` | 额度包列表（`view`）/ 创建 |
 | GET / PUT / DELETE | `/api/quota-packs/:id` | 额度包详情 / 更新 / 删除 |
 | POST | `/api/quota-packs/:id/restore` | 恢复额度包 |
@@ -227,7 +226,8 @@ exp-track/
 
 ## 相关文档
 
-- [产品需求文档 - 单用户单实例版](docs/PRD/expTrack_SingleUser_PRD.md)
-- [产品需求文档 - 团队多人协作版](docs/PRD/expTrack_Team_PRD.md)
-- [CLAUDE.md](CLAUDE.md)（架构与工程规范详尽文档）
-- [AGENTS.md](AGENTS.md)（Agent 协作高价值指引）
+- [CONTRIBUTING.md](CONTRIBUTING.md)（怎么参与，含本地跑起来的完整步骤与常见卡点）
+- [AGENTS.md](AGENTS.md)（开发约束与协作说明：分层、迁移、分支与发版流程）
+- [CHANGELOG.md](CHANGELOG.md)（版本变更记录与已知限制）
+- [SECURITY.md](SECURITY.md)（安全边界：本项目无鉴权，勿直接暴露公网）
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)（行为准则）

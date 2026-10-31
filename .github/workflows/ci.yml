@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: 类型检查 / Lint / 构建 / 空库迁移冒烟
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      mysql:
+        image: mysql:8.0.45
+        env:
+          MYSQL_ROOT_PASSWORD: root123456
+          MYSQL_DATABASE: exp_track_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot123456"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      # 前后端的 type-check 都依赖 @exp-track/shared 的 dist，
+      # 必须先构建，否则会报模块找不到。
+      - name: 构建共享包
+        run: pnpm build:shared
+
+      # 不带 --fix：CI 里要让问题暴露成失败，而不是被自动改掉后静默通过。
+      # 脚本名不用 lint:* 前缀，避免被本地 `pnpm lint` 的通配一起跑到。
+      - name: Lint
+        run: pnpm ci:lint
+
+      # 含 type-check + 前端构建 + 后端构建 + release 组装
+      - name: 构建
+        run: pnpm build
+
+      # 用编译产物从空库启动，覆盖后端启动时的自动迁移路径（与 migrate CLI 不是同一条路径）。
+      - name: 空库启动迁移冒烟
+        env:
+          NODE_ENV: production
+          LOG_LEVEL: info
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: 3306
+          MYSQL_USER: root
+          MYSQL_PASSWORD: root123456
+          MYSQL_DATABASE: exp_track_ci
+        run: |
+          set -euo pipefail
+
+          pnpm --dir backend start > /tmp/exp-track-backend.log 2>&1 &
+          backend_pid=$!
+
+          cleanup() {
+            kill "$backend_pid" 2>/dev/null || true
+            wait "$backend_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:15180/api/health > /tmp/exp-track-health.json; then
+              node -e "const fs = require('node:fs'); const payload = JSON.parse(fs.readFileSync('/tmp/exp-track-health.json', 'utf8')); if (!payload.ok || payload.data?.status !== 'ok' || !payload.data?.database?.reachable) process.exit(1)"
+
+              curl -fsS http://127.0.0.1:15180/api/categories > /tmp/exp-track-categories.json
+              node -e "const fs = require('node:fs'); const payload = JSON.parse(fs.readFileSync('/tmp/exp-track-categories.json', 'utf8')); if (!payload.ok || !Array.isArray(payload.data)) process.exit(1)"
+
+              curl -fsS 'http://127.0.0.1:15180/api/subscriptions?view=active&page=1&pageSize=1' > /tmp/exp-track-subscriptions.json
+              node -e "const fs = require('node:fs'); const payload = JSON.parse(fs.readFileSync('/tmp/exp-track-subscriptions.json', 'utf8')); if (!payload.ok || !Array.isArray(payload.data?.items)) process.exit(1)"
+              exit 0
+            fi
+
+            if ! kill -0 "$backend_pid" 2>/dev/null || ps -p "$backend_pid" -o stat= 2>/dev/null | grep -q '^Z'; then
+              cat /tmp/exp-track-backend.log
+              exit 1
+            fi
+
+            sleep 1
+          done
+
+          cat /tmp/exp-track-backend.log
+          exit 1

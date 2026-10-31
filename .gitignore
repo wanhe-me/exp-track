@@ -46,6 +46,15 @@ backend/.env
 backend/.env.local
 backend/*.log
 
+# SQLite 时代遗留的本地库文件（当前固定 MySQL，本地数据不入库）
+backend/data/
+
+# 本地 AI 协作痕迹与工作记忆（非项目代码）
+.workbuddy/
+
+# 产品需求文档：需求尚未定稿，只在本地保留，不随仓库提交
+docs/PRD/
+
 # 部署产物（scripts/build-release.mjs 输出）
 release/
 
