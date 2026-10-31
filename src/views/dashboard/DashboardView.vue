@@ -33,8 +33,10 @@ const goToManagement = (): void => {
 
 onMounted(async () => {
   await Promise.all([categoryStore.fetchAll(), subscriptionStore.setView('active')])
-  // 看板加载后并发拉取每个订阅的额度包槽位（FR-12 卡片展示）
-  const ids = subscriptions.value.map((s) => s.id)
+  // 只有额度型订阅才有额度包槽位；按类型过滤后再拉，避免为每个订阅各发一次请求
+  const ids = subscriptions.value
+    .filter((s) => s.subscriptionType === 'quota')
+    .map((s) => s.id)
   if (ids.length > 0) {
     void quotaPackStore.fetchSlots(ids)
   }
