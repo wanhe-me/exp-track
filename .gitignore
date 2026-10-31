@@ -52,6 +52,9 @@ backend/data/
 # 本地 AI 协作痕迹与工作记忆（非项目代码）
 .workbuddy/
 
+# 产品需求文档：需求尚未定稿，只在本地保留，不随仓库提交
+docs/PRD/
+
 # 部署产物（scripts/build-release.mjs 输出）
 release/
 

@@ -1,6 +1,10 @@
 # AGENTS.md
 
-本文件是 exp-track 仓库**唯一**的开发约束与协作说明。原先的 `CLAUDE.md` 已合并至此并删除，不要再新建同类文件（`CLAUDE.md`、`CODEBUDDY.md`、`.cursorrules` 等）。产品定义看 `docs/PRD/`，部署操作看 `README.md`，表结构看 `sql/schema.sql`。
+本文件是 exp-track 仓库**深度开发约束**：分层、迁移、分支与发版流程。面向新贡献者的入门引导在 `CONTRIBUTING.md`，两者不重复——入门看 CONTRIBUTING，动手改代码前读本文件。
+
+原先的 `CLAUDE.md` 已合并至此并删除，不要再新建同类文件（`CLAUDE.md`、`CODEBUDDY.md`、`.cursorrules` 等）。产品定义在本地 `docs/PRD/`（需求未定稿，该目录已在 `.gitignore` 中，不随仓库提交），部署操作看 `README.md`，表结构看 `sql/schema.sql`。
+
+> 文中出现的 `FR-xx` 是内部需求编号，对应的需求文档不公开。编号仅用于本仓库内部追溯，读到不必去找原文——约束本身已在本文件里写全。
 
 ## 项目概述
 
@@ -10,7 +14,7 @@ exp-track 是**本地优先的订阅到期追踪与可视化网站**，单仓库
 - **`backend/`**：后端（Express 5 + TypeScript），端口 15180。
 - **`packages/_shared/`**：前后端共享的领域类型 / 契约 / 常量，两端以 `@exp-track/shared` 引用。
 
-前端经 Axios 调后端 REST API，双方遵守统一响应信封。详见 `docs/PRD/expTrack_PRD.md`。
+前端经 Axios 调后端 REST API，双方遵守统一响应信封。接口清单与信封格式见 `README.md` 的「API 响应格式」（接口契约尚未定稿，没有独立的 API 文档，以代码为准）。
 
 > **当前实现状态**：FR-01 ~ FR-13 已实现（含额度包/补给包追踪 FR-11~FR-13）。
 > - **MySQL 为唯一数据存储**：SQLite 部署模式已移除。`docker compose up -d` 拉起 MySQL 8.0 + phpMyAdmin，`backend/.env` 配 `MYSQL_*` 即可。
